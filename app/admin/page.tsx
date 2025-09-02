@@ -1,18 +1,10 @@
 "use client";
 
 import { useMemo, useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Gallery } from '@/components/Gallery';
-import ImageDetailPanel from '@/components/ImageDetailPanel';
 import Lightbox from './Lightbox';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import SearchFilterBar from '@/components/admin/SearchFilterBar';
+import AdminSidebar from '@/components/admin/AdminSidebar';
 
 const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library';
 
@@ -26,12 +18,6 @@ export default function AdminPage() {
   const [items, setItems] = useState<import('@/components/ImageCard').ImageRow[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-
-  const nsfwOptions: { label: string; value: '' | 'true' | 'false' }[] = [
-    { label: 'Any', value: '' },
-    { label: 'Only NSFW', value: 'true' },
-    { label: 'Only SFW', value: 'false' },
-  ];
 
   const query = useMemo(
     () => ({ q, nsfw, sort }),
@@ -63,64 +49,18 @@ export default function AdminPage() {
           <div className="hidden sm:block text-sm text-muted-foreground">/admin</div>
         </header>
 
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center py-2">
-          <div className="flex-1">
-            <Input
-              placeholder="Search filename or UID"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Size: {thumbSize}</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Thumbnail size</DropdownMenuLabel>
-              {(['XL', 'L', 'M', 'S', 'XS'] as const).map((s) => (
-                <DropdownMenuItem key={s} onClick={() => setThumbSize(s)}>
-                  {s}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">NSFW</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>NSFW</DropdownMenuLabel>
-              {nsfwOptions.map((o) => (
-                <DropdownMenuItem key={o.label} onClick={() => setNsfw(o.value)}>
-                  {o.label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Sort</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Sort</DropdownMenuLabel>
-              {[
-                'created_at.desc',
-                'created_at.asc',
-                'bytes.desc',
-                'bytes.asc',
-                'id.desc',
-                'id.asc',
-              ].map((s) => (
-                <DropdownMenuItem key={s} onClick={() => setSort(s)}>
-                  {s}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button variant="outline" onClick={() => setShowDetail((v) => !v)} className="whitespace-nowrap">
-            {showDetail ? 'Hide details' : 'Show details'}
-          </Button>
-        </div>
+        <SearchFilterBar
+          q={q}
+          onChangeQ={setQ}
+          size={thumbSize}
+          onChangeSize={setThumbSize}
+          nsfw={nsfw}
+          onChangeNsfw={setNsfw}
+          sort={sort as any}
+          onChangeSort={setSort as any}
+          showDetail={showDetail}
+          onToggleDetail={() => setShowDetail((v) => !v)}
+        />
       </div>
 
 
@@ -133,54 +73,25 @@ export default function AdminPage() {
             gridClassName={gridClassName}
           />
         </div>
-        <aside className={`hidden lg:block transition-opacity duration-200 ${showDetail ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="h-[calc(100dvh-10rem)] sticky top-[7.5rem] overflow-auto">
-            {selected ? (
-              <div className="relative">
-                <button className="flex  w-full justify-end text-sm text-muted-foreground hover:underline" onClick={() => setShowDetail(false)}>
-                  Hide
-                
-                </button>
-                <ImageDetailPanel
-                  item={selected}
-                  onOpenModal={() => setIsLightboxOpen(true)}
-                />
-                {showDetail ? (
-                  <div className="opacity-50 absolute left-2 top-0 flex items-center gap-0">
-                    <button
-                      className="h-7 w-7 rounded-full bg-background/80 backdrop-blur  text-sm"
-                      onClick={() => {
-                        if (selectedIndex == null) return;
-                        const prev = selectedIndex > 0 ? selectedIndex - 1 : 0;
-                        setSelectedIndex(prev);
-                        setSelected(items[prev] ?? selected);
-                      }}
-                      aria-label="Previous"
-                    >
-                      ←
-                    </button>
-                    <button
-                      className="h-7 w-7 rounded-full bg-background/80 backdrop-blur  text-sm"
-                      onClick={() => {
-                        if (selectedIndex == null) return;
-                        const next = Math.min((items.length - 1), selectedIndex + 1);
-                        setSelectedIndex(next);
-                        setSelected(items[next] ?? selected);
-                      }}
-                      aria-label="Next"
-                    >
-                      →
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                Select an image
-              </div>
-            )}
-          </div>
-        </aside>
+        <AdminSidebar
+          show={showDetail}
+          selected={selected}
+          items={items}
+          selectedIndex={selectedIndex}
+          onClose={() => setShowDetail(false)}
+          onNavigate={(dir) => {
+            if (selectedIndex == null) return;
+            if (dir === 'prev') {
+              const prev = selectedIndex > 0 ? selectedIndex - 1 : 0;
+              setSelectedIndex(prev);
+              setSelected(items[prev] ?? selected);
+            } else {
+              const next = Math.min((items.length - 1), selectedIndex + 1);
+              setSelectedIndex(next);
+              setSelected(items[next] ?? selected);
+            }
+          }}
+        />
       </div>
       {isLightboxOpen && selected?.signedUrl ? (
         <Lightbox
