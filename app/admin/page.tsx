@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, use } from 'react';
 import { Gallery } from '@/components/Gallery';
 import Lightbox from './Lightbox';
 import SearchFilterBar from '@/components/admin/SearchFilterBar';
@@ -9,15 +9,17 @@ import TopNavLinks from '@/components/admin/TopNavLinks';
 
 const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library';
 
-export default function AdminPage({ searchParams }: { searchParams?: { collectionId?: string } }) {
+export default function AdminPage({ searchParams }: { searchParams?: Promise<{ collectionId?: string }> }) {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<string>('created_at.desc');
   const [thumbSize, setThumbSize] = useState<'XL' | 'L' | 'M' | 'S' | 'XS'>('M');
   const [selected, setSelected] = useState<import('@/components/ImageCard').ImageRow | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
-  const initialCollectionId = typeof searchParams?.collectionId === 'string' ? Number(searchParams!.collectionId) : null;
+  const sp = searchParams ? use(searchParams) : undefined;
+  const initialCollectionId = typeof sp?.collectionId === 'string' ? Number(sp.collectionId) : null;
   const [collectionId, setCollectionId] = useState<number | null>(initialCollectionId);
   const [items, setItems] = useState<import('@/components/ImageCard').ImageRow[]>([]);
+  const [removedIds, setRemovedIds] = useState<number[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement | null>(null);
@@ -35,11 +37,35 @@ export default function AdminPage({ searchParams }: { searchParams?: { collectio
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showDetail) setShowDetail(false);
+      if (e.key !== 'Escape') return;
+      // Priority: close lightbox first if open, otherwise close sidebar
+      if (isLightboxOpen) {
+        setIsLightboxOpen(false);
+        return;
+      }
+      if (showDetail) setShowDetail(false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showDetail]);
+  }, [isLightboxOpen, showDetail]);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const id = (e as CustomEvent<{ imageId: number }>).detail?.imageId;
+      if (!id) return;
+      // If viewing Saved collection, remove immediately
+      if (collectionId) {
+        setRemovedIds((prev) => (prev.includes(id) ? prev : prev.concat(id)));
+        setItems((prev) => prev.filter((it) => it.id !== id));
+        if (selected?.id === id) {
+          setSelected(null);
+          setShowDetail(false);
+        }
+      }
+    };
+    window.addEventListener('image-unsaved', handler as EventListener);
+    return () => window.removeEventListener('image-unsaved', handler as EventListener);
+  }, [collectionId, selected]);
 
   const query = useMemo(
     () => ({ q, sort, collectionId: collectionId ?? undefined }),
@@ -110,6 +136,7 @@ export default function AdminPage({ searchParams }: { searchParams?: { collectio
             query={query}
             onSelect={(it, idx, list) => { setItems(list); setSelected(it); setSelectedIndex(idx); setShowDetail(true); }}
             gridClassName={gridClassName}
+            removedIds={removedIds}
           />
         </div>
         <AdminSidebar
@@ -131,6 +158,18 @@ export default function AdminPage({ searchParams }: { searchParams?: { collectio
             }
           }}
           onOpenModal={() => setIsLightboxOpen(true)}
+          currentCollectionId={collectionId}
+          onRemovedFromCollection={(imageId) => {
+            // Optimistically remove from current view if filtering by a collection
+            if (collectionId) {
+              setItems((prev) => prev.filter((it) => it.id !== imageId));
+              setRemovedIds((prev) => (prev.includes(imageId) ? prev : prev.concat(imageId)));
+              if (selected?.id === imageId) {
+                setSelected(null);
+                setShowDetail(false);
+              }
+            }
+          }}
         />
       </div>
       {isLightboxOpen && selected?.signedUrl ? (

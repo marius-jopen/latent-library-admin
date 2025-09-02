@@ -13,11 +13,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 type Collection = { id: number; name: string };
+type Props = { imageId: number; currentCollectionId?: number | null; onRemoved?: (imageId: number) => void; saved?: boolean };
 
-export function CollectionPicker({ imageId }: { imageId: number }) {
+export function CollectionPicker({ imageId, currentCollectionId, onRemoved, saved }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([]);
+  const [memberOf, setMemberOf] = useState<number[]>([]);
   const [newName, setNewName] = useState('');
 
   async function loadCollections() {
@@ -30,6 +32,16 @@ export function CollectionPicker({ imageId }: { imageId: number }) {
   useEffect(() => {
     if (open) loadCollections();
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const res = await fetch(`/api/images/${imageId}/collections`);
+      if (!res.ok) return;
+      const data = (await res.json()) as { collectionIds: number[] };
+      setMemberOf(data.collectionIds || []);
+    })();
+  }, [open, imageId]);
 
   async function addToCollection(collectionId: number) {
     setLoading(true);
@@ -71,11 +83,43 @@ export function CollectionPicker({ imageId }: { imageId: number }) {
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuLabel>Add to collection</DropdownMenuLabel>
         {collections.length > 0 ? (
-          collections.map((c) => (
-            <DropdownMenuItem key={c.id} onClick={() => addToCollection(c.id)} disabled={loading}>
-              {c.name}
-            </DropdownMenuItem>
-          ))
+          collections.map((c) => {
+            const isMember = memberOf.includes(c.id);
+            const showRemove = isMember || (saved && c.name.toLowerCase() === 'saved');
+            return (
+              <div key={c.id} className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-full hover:bg-accent">
+                <button
+                  className="text-left flex-1"
+                  disabled={loading}
+                  onClick={() => addToCollection(c.id)}
+                >
+                  {c.name}
+                </button>
+                {showRemove ? (
+                  <button
+                    className="text-xs rounded-full px-2 py-1 bg-destructive text-white"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      setLoading(true);
+                      try {
+                        await fetch(`/api/collections/${c.id}/images`, {
+                          method: 'DELETE',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ imageId }),
+                        });
+                        setOpen(false);
+                        onRemoved?.(imageId);
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+            );
+          })
         ) : (
           <div className="px-2 py-1 text-xs text-muted-foreground">No collections yet</div>
         )}

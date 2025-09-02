@@ -21,7 +21,7 @@ async function fetchPage(params: QueryState & { cursor?: string }) {
   return (await res.json()) as { items: ImageRow[]; nextCursor: string | null; total: number | null };
 }
 
-export function Gallery({ query, onSelect, gridClassName }: { query: QueryState; onSelect?: (item: ImageRow, index: number, list: ImageRow[]) => void; gridClassName?: string }) {
+export function Gallery({ query, onSelect, gridClassName, removedIds }: { query: QueryState; onSelect?: (item: ImageRow, index: number, list: ImageRow[]) => void; gridClassName?: string; removedIds?: number[] }) {
   const [items, setItems] = useState<ImageRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -75,6 +75,12 @@ export function Gallery({ query, onSelect, gridClassName }: { query: QueryState;
     io.observe(el);
     return () => io.disconnect();
   }, [nextCursor, loading, stableQuery]);
+
+  // Remove any items that were removed externally (e.g., from a collection) immediately
+  useEffect(() => {
+    if (!removedIds || removedIds.length === 0) return;
+    setItems((prev) => prev.filter((it) => !removedIds.includes(it.id)));
+  }, [removedIds]);
 
   const loadedCount = items.length;
 

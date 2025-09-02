@@ -29,10 +29,17 @@ export async function GET() {
     map.set(row.collection_id, arr);
   });
 
-  const withPreviews = (cols ?? []).map((c) => ({
+  let withPreviews = (cols ?? []).map((c) => ({
     ...c,
     previews: map.get(c.id) || [],
   }));
+  // Ensure "Saved" appears first
+  withPreviews = withPreviews.sort((a: any, b: any) => {
+    const aP = String(a.name).toLowerCase() === 'saved' ? 0 : 1;
+    const bP = String(b.name).toLowerCase() === 'saved' ? 0 : 1;
+    if (aP !== bP) return aP - bP;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 
   return NextResponse.json(withPreviews);
 }

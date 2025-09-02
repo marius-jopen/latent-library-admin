@@ -10,6 +10,8 @@ export function AdminSidebar({
   onClose,
   onNavigate,
   onOpenModal,
+  currentCollectionId,
+  onRemovedFromCollection,
 }: {
   show: boolean;
   selected: import('@/components/ImageCard').ImageRow | null;
@@ -18,6 +20,8 @@ export function AdminSidebar({
   onClose: () => void;
   onNavigate: (direction: 'prev' | 'next') => void;
   onOpenModal: () => void;
+  currentCollectionId?: number | null;
+  onRemovedFromCollection?: (imageId: number) => void;
 }) {
   return (
     <aside className={`hidden lg:block transition-opacity duration-200 ${show ? 'opacity-100' : 'opacity-0'}`}>
@@ -30,6 +34,8 @@ export function AdminSidebar({
             <ImageDetailPanel
               item={selected}
               onOpenModal={onOpenModal}
+              currentCollectionId={currentCollectionId}
+              onRemovedFromCollection={onRemovedFromCollection}
             />
             {show ? (
               <div className="opacity-50 absolute left-2 top-0 flex items-center gap-0">

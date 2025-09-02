@@ -24,8 +24,8 @@ export default function CollectionsPage() {
     const list = (await res.json()) as Collection[];
     // Put Default first, keep others order afterwards
     const sorted = [...list].sort((a, b) => {
-      const aDef = a.name.toLowerCase() === 'default' ? 0 : 1;
-      const bDef = b.name.toLowerCase() === 'default' ? 0 : 1;
+      const aDef = a.name.toLowerCase() === 'saved' ? 0 : 1;
+      const bDef = b.name.toLowerCase() === 'saved' ? 0 : 1;
       if (aDef !== bDef) return aDef - bDef;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
@@ -84,7 +84,7 @@ export default function CollectionsPage() {
         {collections.map((c) => {
           const count = c.previews?.length || 0;
           const imgs = c.previews || [];
-          const isDefault = c.name.toLowerCase() === 'default';
+          const isSaved = c.name.toLowerCase() === 'saved';
           return (
             <div className="rounded-md border p-0 overflow-hidden relative" key={c.id}>
               <a href={`/admin?collectionId=${c.id}`} className="block">
@@ -147,30 +147,30 @@ export default function CollectionsPage() {
                 <div className="text-xs text-muted-foreground">Created {new Date(c.created_at).toLocaleString()}</div>
               </div>
               </a>
-              <form
-                className="absolute bottom-3 z-20 right-2"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (isDefault) return;
-                  const btn = e.currentTarget.querySelector('button');
-                  if (btn) btn.setAttribute('disabled', 'true');
-                  try {
-                    const res = await fetch(`/api/collections/${c.id}`, { method: 'DELETE' });
-                    if (!res.ok) alert('Failed to delete collection');
-                    else setCollections((prev) => prev.filter((x) => x.id !== c.id));
-                  } finally {
-                    if (btn) btn.removeAttribute('disabled');
-                  }
-                }}
-              >
-                <button
-                  type="submit"
-                  disabled={isDefault}
-                  className={`font-medium h-8 px-3 rounded-full text-white text-xs ${isDefault ? 'bg-gray-300 cursor-not-allowed' : 'bg-destructive hover:bg-destructive/90 cursor-pointer'}`}
+              {isSaved ? null : (
+                <form
+                  className="absolute bottom-3 z-20 right-2"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const btn = e.currentTarget.querySelector('button');
+                    if (btn) btn.setAttribute('disabled', 'true');
+                    try {
+                      const res = await fetch(`/api/collections/${c.id}`, { method: 'DELETE' });
+                      if (!res.ok) alert('Failed to delete collection');
+                      else setCollections((prev) => prev.filter((x) => x.id !== c.id));
+                    } finally {
+                      if (btn) btn.removeAttribute('disabled');
+                    }
+                  }}
                 >
-                  Delete
-                </button>
-              </form>
+                  <button
+                    type="submit"
+                    className="font-medium h-8 px-3 rounded-full text-white text-xs bg-destructive hover:bg-destructive/90 cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </form>
+              )}
             </div>
           );
         })}

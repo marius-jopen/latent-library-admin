@@ -5,7 +5,7 @@ export async function POST(req: Request) {
   const { imageId, collectionName } = (await req.json()) as { imageId?: number; collectionName?: string };
   if (!imageId) return NextResponse.json({ error: 'imageId required' }, { status: 400 });
   const supabase = getSupabaseAdminClient();
-  const name = (collectionName || 'Default').trim();
+  const name = (collectionName || 'Saved').trim();
 
   // Find or create collection by name
   let { data: col, error: findErr } = await supabase
@@ -31,6 +31,22 @@ export async function POST(req: Request) {
   if (attachErr) return NextResponse.json({ error: attachErr.message }, { status: 500 });
 
   return NextResponse.json({ ok: true, collectionId: col!.id });
+}
+
+export async function DELETE(req: Request) {
+  const { imageId } = (await req.json()) as { imageId?: number };
+  if (!imageId) return NextResponse.json({ error: 'imageId required' }, { status: 400 });
+  const supabase = getSupabaseAdminClient();
+  // Find the Saved collection
+  const { data: col, error } = await supabase.from('collections').select('id').eq('name', 'Saved').single();
+  if (error || !col) return NextResponse.json({ error: 'Saved collection not found' }, { status: 404 });
+  const { error: delErr } = await supabase
+    .from('collection_images')
+    .delete()
+    .eq('collection_id', col.id)
+    .eq('image_id', imageId);
+  if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }
 
 

@@ -15,12 +15,26 @@ function formatBytes(num?: number | null): string {
   return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
-export function ImageDetailPanel({ item, onOpenModal }: { item: ImageRow; onOpenModal?: () => void }) {
+export function ImageDetailPanel({ item, onOpenModal, currentCollectionId, onRemovedFromCollection }: { item: ImageRow; onOpenModal?: () => void; currentCollectionId?: number | null; onRemovedFromCollection?: (imageId: number) => void }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
   const [liked, setLiked] = useState<boolean>(!!item.liked);
   useEffect(() => {
     setLiked(!!item.liked);
   }, [item.id, item.liked]);
+  useEffect(() => {
+    // Ensure the SaveButton reflects actual membership in Saved collection
+    (async () => {
+      try {
+        const res = await fetch(`/api/images/${item.id}/collections`);
+        if (!res.ok) return;
+        const data = (await res.json()) as { collectionNames?: string[] };
+        if (Array.isArray(data.collectionNames)) {
+          const inSaved = data.collectionNames.some((n) => String(n).toLowerCase() === 'saved');
+          setLiked(inSaved);
+        }
+      } catch {}
+    })();
+  }, [item.id]);
   async function toggleLike() {
     setLiked((v) => !v);
     try {
@@ -47,7 +61,7 @@ export function ImageDetailPanel({ item, onOpenModal }: { item: ImageRow; onOpen
           <CardContent className="px-3 pt-3 pb-5">
             <div className="flex items-center gap-2">
               <SaveButton saved={liked} onToggle={toggleLike} imageId={item.id} />
-              <CollectionPicker imageId={item.id} />
+              <CollectionPicker imageId={item.id} currentCollectionId={currentCollectionId ?? undefined} onRemoved={onRemovedFromCollection} saved={liked} />
             </div>
           </CardContent>
         </Card>

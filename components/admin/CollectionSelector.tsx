@@ -18,7 +18,11 @@ export function CollectionSelector({ value, onChange }: { value: number | null; 
   useEffect(() => {
     fetch('/api/collections')
       .then((r) => r.json())
-      .then((data: Array<Collection>) => setCollections(data.map(({ id, name }) => ({ id, name }))));
+      .then((data: Array<Collection & { created_at?: string }>) => {
+        const list = data.map(({ id, name }) => ({ id, name }));
+        list.sort((a, b) => (a.name.toLowerCase() === 'saved' ? -1 : b.name.toLowerCase() === 'saved' ? 1 : 0));
+        setCollections(list);
+      });
   }, []);
 
   const label = value == null ? 'Collections' : (collections.find((c) => c.id === value)?.name || 'Collections');
