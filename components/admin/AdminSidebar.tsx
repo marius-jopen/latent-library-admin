@@ -25,7 +25,7 @@ export function AdminSidebar({
 }) {
   return (
     <aside className={`hidden lg:block transition-opacity duration-200 ${show ? 'opacity-100' : 'opacity-0'}`}>
-      <div className="h-[calc(100dvh-0rem)] sticky top-[90px] overflow-auto">
+      <div className="h-[calc(100dvh-0rem)] sticky top-[88px] overflow-auto">
         {selected ? (
           <div className="relative">
             <ImageDetailPanel

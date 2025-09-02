@@ -126,7 +126,7 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
           />
         </div>
       </div>
-      <div style={{ height: headerHeight }} />
+      <div style={{ height: headerHeight - 30 }} />
 
 
 
