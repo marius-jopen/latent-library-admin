@@ -38,6 +38,10 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   const limit = Math.min(Number(url.searchParams.get('limit') || '60'), 200);
   const sortParam = (url.searchParams.get('sort') as `${string}.${'asc' | 'desc'}` | null) || 'created_at.desc';
   const cursor = url.searchParams.get('cursor') ?? undefined;
+  const collectionId = Number(id);
+  if (!Number.isFinite(collectionId)) {
+    return NextResponse.json({ error: 'Invalid collection id' }, { status: 400 });
+  }
 
   const supabase = getSupabaseAdminClient();
   const [sortField, direction] = sortParam.split('.') as [string, 'asc' | 'desc'];
@@ -45,7 +49,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   let query = supabase
     .from('images')
     .select('*, collection_images!inner(collection_id)', { count: 'exact' })
-    .eq('collection_images.collection_id', Number(id))
+    .eq('collection_images.collection_id', collectionId)
     .order(sortField, { ascending: direction === 'asc', nullsFirst: direction === 'asc' });
 
   if (cursor) {

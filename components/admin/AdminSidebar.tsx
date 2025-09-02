@@ -25,7 +25,7 @@ export function AdminSidebar({
 }) {
   return (
     <aside className={`hidden lg:block transition-opacity duration-200 ${show ? 'opacity-100' : 'opacity-0'}`}>
-      <div className="h-[calc(100dvh-10rem)] sticky top-[7.5rem] overflow-auto">
+      <div className="h-[calc(100dvh-0rem)] sticky top-0 overflow-auto">
         {selected ? (
           <div className="relative">
             <button className="flex  w-full justify-end text-sm text-muted-foreground " onClick={onClose}>

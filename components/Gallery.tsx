@@ -13,11 +13,28 @@ type QueryState = {
 async function fetchPage(params: QueryState & { cursor?: string }) {
   const basePath = params.collectionId != null ? `/api/collections/${params.collectionId}/images` : '/api/images';
   const url = new URL(basePath, window.location.origin);
-  for (const [k, v] of Object.entries(params)) {
-    if (v) url.searchParams.set(k, v as string);
+  // Only forward known string query params; path already encodes collectionId
+  const allowedKeys: Array<keyof (QueryState & { cursor?: string })> = ['q', 'sort', 'cursor'];
+  for (const key of allowedKeys) {
+    const value = params[key];
+    if (typeof value === 'string' && value) {
+      url.searchParams.set(key, value);
+    }
   }
   const res = await fetch(url.toString());
-  if (!res.ok) throw new Error('Failed to fetch images');
+  if (!res.ok) {
+    let message = `Failed to fetch images (${res.status} ${res.statusText})`;
+    try {
+      const data = await res.clone().json();
+      if (data && typeof data.error === 'string') message = data.error;
+    } catch {
+      try {
+        const text = await res.text();
+        if (text) message = text;
+      } catch {}
+    }
+    throw new Error(message);
+  }
   return (await res.json()) as { items: ImageRow[]; nextCursor: string | null; total: number | null };
 }
 
