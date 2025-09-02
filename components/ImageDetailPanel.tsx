@@ -27,29 +27,28 @@ export function ImageDetailPanel({ item }: { item: ImageRow }) {
         </div>
 
         <Card>
-          <CardHeader className="p-3 pb-0">
-            <div className="font-semibold">Details</div>
-          </CardHeader>
-          <CardContent className="p-3 text-sm space-y-1">
-            <div><span className="text-muted-foreground">Filename:</span> {filename}</div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {item.format ? <Badge variant="secondary">{item.format}</Badge> : null}
-              {item.status ? <Badge variant="outline">{item.status}</Badge> : null}
-              {item.nsfw ? <Badge variant="destructive">NSFW</Badge> : null}
-            </div>
-            <div><span className="text-muted-foreground">UID:</span> {item.uid}</div>
-            <div><span className="text-muted-foreground">Bytes:</span> {formatBytes(item.bytes)}</div>
-            <div><span className="text-muted-foreground">Dimensions:</span> {item.width && item.height ? `${item.width}×${item.height}` : '—'}</div>
-            <div><span className="text-muted-foreground">Format:</span> {item.format || '—'}</div>
-            <div><span className="text-muted-foreground">Status:</span> {item.status || '—'}</div>
-            <div><span className="text-muted-foreground">NSFW:</span> {item.nsfw ? 'true' : 'false'}</div>
-            <div><span className="text-muted-foreground">Created:</span> {item.created_at}</div>
-            <div className="pt-2">
-              <div className="text-muted-foreground mb-1">S3</div>
-              <div className="text-xs break-all">
-                <div>Bucket: {item.s3_bucket || '—'}</div>
-                <div>Key: {item.s3_key}</div>
-              </div>
+          {/* <CardHeader className="px-3 py-1">
+            <div className="font-semibold text-xs">Details</div>
+          </CardHeader> */}
+          <CardContent className="px-3 pb-2">
+            <div className="text-xs">
+              {[
+                { label: 'Filename', value: filename, breakAll: true },
+                { label: 'UID', value: item.uid, breakAll: true },
+                { label: 'Bytes', value: formatBytes(item.bytes) },
+                { label: 'Dimensions', value: item.width && item.height ? `${item.width}×${item.height}` : '—' },
+                { label: 'Format', value: item.format || '—' },
+                { label: 'Status', value: item.status || '—' },
+                { label: 'NSFW', value: item.nsfw ? 'true' : 'false' },
+                { label: 'Created', value: item.created_at },
+                { label: 'Bucket', value: item.s3_bucket || '—' },
+                { label: 'Key', value: item.s3_key, breakAll: true },
+              ].map((row) => (
+                <div key={row.label} className="grid grid-cols-[110px_1fr] gap-x-3 py-1.5 border-t first:border-t-0">
+                  <div className="text-muted-foreground">{row.label}</div>
+                  <div className={row.breakAll ? 'break-all' : ''}>{row.value}</div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
