@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Latent Library Admin – Next.js 14 (App Router)
 
-## Getting Started
+Stack: Next.js + TypeScript + Tailwind (v4) + shadcn/ui, Supabase JS, AWS SDK v3 (S3 presigned URLs).
 
-First, run the development server:
+What it does
+- Password-gated `/admin` with an images gallery from the `images` table in Supabase
+- Each card shows a signed S3 URL thumbnail, filename, bytes, dimensions, format, and created time
+- Search, filters (status, format, NSFW), sort, and infinite scroll
 
+Getting started
+1) Install dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2) Create `.env.local` at project root
+```bash
+NEXT_PUBLIC_APP_NAME="Latent Library Admin"
+SUPABASE_URL=your-url
+SUPABASE_SERVICE_ROLE=your-service-role-key
+AWS_REGION=eu-central-1
+AWS_S3_PUBLIC_ENDPOINT=https://s3.eu-central-1.amazonaws.com
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret
+ADMIN_PASSWORD=change-me
+S3_DEFAULT_BUCKET=latent-library
+PAGE_SIZE=60
+SIGNED_URL_TTL_SECONDS=900
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3) Run dev
+```bash
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Auth and middleware
+- `/login` posts to `/api/login` and sets a `admin=1` HttpOnly cookie (24h)
+- `middleware.ts` protects `/admin` and `/api/images`
 
-## Learn More
+API
+- `/api/images` (GET) accepts `q`, `status`, `format`, `nsfw`, `sort`, `cursor`, `limit`
+- Attaches presigned URLs using AWS SDK v3; secrets never reach the browser
 
-To learn more about Next.js, take a look at the following resources:
+Notes
+- Page size defaults to `PAGE_SIZE` env (60)
+- If signing fails, a placeholder is shown and metadata still renders
+- Future controls for `is_public` and `tags` are present but disabled
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+License
+MIT
