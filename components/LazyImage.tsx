@@ -6,11 +6,13 @@ type LazyImageProps = {
   src: string;
   alt: string;
   className?: string;
+  fit?: 'cover' | 'contain';
 };
 
-export function LazyImage({ src, alt, className }: LazyImageProps) {
+export function LazyImage({ src, alt, className, fit = 'cover' }: LazyImageProps) {
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [srcToShow, setSrcToShow] = useState<string | null>(null);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -20,6 +22,7 @@ export function LazyImage({ src, alt, className }: LazyImageProps) {
         const entry = entries[0];
         if (entry.isIntersecting) {
           setIsVisible(true);
+          setSrcToShow(src);
           io.disconnect();
         }
       },
@@ -31,9 +34,15 @@ export function LazyImage({ src, alt, className }: LazyImageProps) {
 
   return (
     <div ref={containerRef} className={className}>
-      {isVisible ? (
+      {isVisible && srcToShow ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={alt} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+        <img
+          src={srcToShow}
+          alt={alt}
+          loading="lazy"
+          decoding="async"
+          className={`w-full h-auto ${fit === 'contain' ? 'object-contain' : 'object-cover'}`}
+        />
       ) : null}
     </div>
   );

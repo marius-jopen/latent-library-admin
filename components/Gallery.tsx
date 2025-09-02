@@ -22,7 +22,7 @@ async function fetchPage(params: QueryState & { cursor?: string }) {
   return (await res.json()) as { items: ImageRow[]; nextCursor: string | null; total: number | null };
 }
 
-export function Gallery({ query }: { query: QueryState }) {
+export function Gallery({ query, onSelect, gridClassName }: { query: QueryState; onSelect?: (item: ImageRow) => void; gridClassName?: string }) {
   const [items, setItems] = useState<ImageRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -84,13 +84,15 @@ export function Gallery({ query }: { query: QueryState }) {
       <div className="text-sm text-muted-foreground">
         {total != null ? `Loaded ${loadedCount} of ${total}` : `Loaded ${loadedCount}`}
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+      <div className={gridClassName || "columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-3"}>
         {items.map((item) => (
-          <ImageCard key={item.id} item={item} />
+          <div key={item.id} className="break-inside-avoid mb-3">
+            <ImageCard item={item} onSelect={onSelect} />
+          </div>
         ))}
         {loading && !initialized
           ? Array.from({ length: 12 }).map((_, i) => (
-              <div className="space-y-2" key={`sk-${i}`}>
+              <div className="space-y-2 break-inside-avoid" key={`sk-${i}`}>
                 <Skeleton className="aspect-square w-full" />
                 <Skeleton className="h-4 w-2/3" />
                 <Skeleton className="h-3 w-1/2" />
