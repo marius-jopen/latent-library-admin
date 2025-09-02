@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
+import { LazyImage } from './LazyImage';
 
 function formatBytes(num?: number | null): string {
   if (!num || num <= 0) return '0 B';
@@ -41,13 +42,7 @@ export function ImageCard({ item }: { item: ImageRow }) {
       <Link href={`/admin/images/${item.id}`} prefetch={false} className="block">
         <div className="aspect-square bg-muted flex items-center justify-center">
           {item.signedUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={item.signedUrl}
-              alt={filename}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
+            <LazyImage src={item.signedUrl} alt={filename} className="h-full w-full" />
           ) : (
             <div className="text-xs text-muted-foreground">missing</div>
           )}

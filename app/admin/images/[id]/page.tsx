@@ -16,18 +16,34 @@ function formatBytes(num?: number | null): string {
   return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
+type ImageRow = {
+  id: number;
+  uid: string;
+  s3_bucket: string | null;
+  s3_key: string;
+  bytes: number | null;
+  status: string | null;
+  created_at: string;
+  width: number | null;
+  height: number | null;
+  format: string | null;
+  nsfw: boolean | null;
+  metadata: unknown;
+};
+
 export default async function ImageDetailPage({ params }: { params: { id: string } }) {
   const idNum = Number(params.id);
   if (!Number.isFinite(idNum)) notFound();
 
   const supabase = getSupabaseAdminClient();
-  const { data: row, error } = await supabase
+  const { data, error } = await supabase
     .from('images')
     .select('*')
     .eq('id', idNum)
     .single();
 
-  if (error || !row) notFound();
+  if (error || !data) notFound();
+  const row = data as ImageRow;
 
   const bucket = row.s3_bucket || S3_DEFAULT_BUCKET;
   const signedUrl = await getSignedUrlForKey(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS);
