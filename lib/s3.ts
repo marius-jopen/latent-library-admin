@@ -29,7 +29,7 @@ export async function getSignedUrlForKey(
     const command = new GetObjectCommand({ Bucket: bucket, Key: key });
     const url = await getSignedUrl(client, command, { expiresIn: ttlSeconds });
     return url;
-  } catch (_err) {
+  } catch {
     return null;
   }
 }

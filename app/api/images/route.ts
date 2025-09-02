@@ -58,8 +58,23 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  type ImageRow = {
+    id: number;
+    uid: string;
+    s3_bucket: string | null;
+    s3_key: string;
+    bytes: number | null;
+    status: string | null;
+    created_at: string;
+    width: number | null;
+    height: number | null;
+    format: string | null;
+    nsfw: boolean | null;
+    metadata: unknown;
+  };
+
   const items = await Promise.all(
-    (rows ?? []).map(async (row: any) => {
+    (rows as ImageRow[] | null | undefined ?? []).map(async (row) => {
       const bucket = row.s3_bucket || S3_DEFAULT_BUCKET;
       const signedUrl = await getSignedUrlForKey(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS);
       return {
@@ -71,8 +86,8 @@ export async function GET(req: Request) {
 
   let nextCursor: string | null = null;
   if (rows && rows.length === limit) {
-    const last = rows[rows.length - 1] as any;
-    nextCursor = String(last[sortField] ?? last.id);
+    const last = (rows as ImageRow[])[rows.length - 1];
+    nextCursor = String((last as Record<string, unknown>)[sortField] ?? last.id);
   }
 
   return NextResponse.json({ items, nextCursor, total: count ?? null });

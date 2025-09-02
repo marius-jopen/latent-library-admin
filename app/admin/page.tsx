@@ -23,6 +23,12 @@ export default function AdminPage() {
   const [nsfw, setNsfw] = useState<'true' | 'false' | ''>('');
   const [sort, setSort] = useState<string>('created_at.desc');
 
+  const nsfwOptions: { label: string; value: '' | 'true' | 'false' }[] = [
+    { label: 'Any', value: '' },
+    { label: 'Only NSFW', value: 'true' },
+    { label: 'Only SFW', value: 'false' },
+  ];
+
   const query = useMemo(
     () => ({ q, status: status || undefined, format: format || undefined, nsfw, sort }),
     [q, status, format, nsfw, sort],
@@ -75,12 +81,8 @@ export default function AdminPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel>NSFW</DropdownMenuLabel>
-            {[
-              { label: 'Any', value: '' },
-              { label: 'Only NSFW', value: 'true' },
-              { label: 'Only SFW', value: 'false' },
-            ].map((o) => (
-              <DropdownMenuItem key={o.label} onClick={() => setNsfw(o.value as any)}>
+            {nsfwOptions.map((o) => (
+              <DropdownMenuItem key={o.label} onClick={() => setNsfw(o.value)}>
                 {o.label}
               </DropdownMenuItem>
             ))}

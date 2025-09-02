@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -27,7 +27,7 @@ export default function LoginPage() {
       } else {
         router.replace('/admin');
       }
-    } catch (e) {
+    } catch (_err) {
       setError('Something went wrong');
     } finally {
       setLoading(false);
