@@ -17,10 +17,10 @@ export function ImageDetailPanel({ item, onOpenModal }: { item: ImageRow; onOpen
   return (
     <div className="h-full flex flex-col">
       <div className="pl-3 py-3 space-y-3 overflow-auto">
-        <div className="overflow-hidden rounded-xl cursor-zoom-in" onClick={onOpenModal}>
+        <div className="overflow-hidden rounded-md cursor-zoom-in" onClick={onOpenModal}>
           {item.signedUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.signedUrl} alt={filename} className="w-full h-auto object-contain rounded-xl" />
+            <img src={item.signedUrl} alt={filename} className="w-full h-auto object-contain rounded-md" />
           ) : (
             <div className="text-sm text-muted-foreground">Signed URL unavailable</div>
           )}

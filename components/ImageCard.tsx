@@ -31,10 +31,10 @@ export function ImageCard({ item, onSelect }: { item: ImageRow; onSelect?: (item
   const dims = item.width && item.height ? `${item.width}×${item.height}` : '';
 
   return (
-    <div className="group overflow-hidden rounded-xl bg-card/50 shadow-sm hover:shadow-md transition">
+    <div className="group overflow-hidden rounded-md bg-card/50 shadow-sm hover:shadow-md transition">
       <button type="button" onClick={onSelect ? () => onSelect(item) : undefined} className="block w-full text-left">
         <div
-          className="cursor-pointer  relative w-full overflow-hidden rounded-xl bg-muted"
+          className="cursor-pointer  relative w-full overflow-hidden rounded-md bg-muted"
           style={{ aspectRatio: item.width && item.height ? `${item.width}/${item.height}` : undefined }}
         >
           {item.signedUrl ? (

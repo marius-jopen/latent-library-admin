@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Gallery } from '@/components/Gallery';
 import ImageDetailPanel from '@/components/ImageDetailPanel';
 import Lightbox from './Lightbox';
@@ -14,16 +13,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Switch } from '@/components/ui/switch';
 
 const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library';
 
 export default function AdminPage() {
   const [q, setQ] = useState('');
-  const [status, setStatus] = useState<string>('');
-  const [format, setFormat] = useState<string>('');
   const [nsfw, setNsfw] = useState<'true' | 'false' | ''>('');
   const [sort, setSort] = useState<string>('created_at.desc');
+  const [thumbSize, setThumbSize] = useState<'XL' | 'L' | 'M' | 'S' | 'XS'>('L');
   const [selected, setSelected] = useState<import('@/components/ImageCard').ImageRow | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [items, setItems] = useState<import('@/components/ImageCard').ImageRow[]>([]);
@@ -37,9 +34,26 @@ export default function AdminPage() {
   ];
 
   const query = useMemo(
-    () => ({ q, status: status || undefined, format: format || undefined, nsfw, sort }),
-    [q, status, format, nsfw, sort],
+    () => ({ q, nsfw, sort }),
+    [q, nsfw, sort],
   );
+
+  const gridClassName = useMemo(() => {
+    switch (thumbSize) {
+      case 'XL':
+        return 'grid grid-cols-2 gap-2';
+      case 'L':
+        return 'grid grid-cols-4 gap-2';
+      case 'M':
+        return 'grid grid-cols-6 gap-2';
+      case 'S':
+        return 'grid grid-cols-8 gap-1';
+      case 'XS':
+        return 'grid grid-cols-10 gap-1';
+      default:
+        return 'grid grid-cols-4 gap-2';
+    }
+  }, [thumbSize]);
 
   return (
     <div className="p-4 space-y-4">
@@ -59,26 +73,13 @@ export default function AdminPage() {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Status</Button>
+              <Button variant="outline">Size: {thumbSize}</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Status</DropdownMenuLabel>
-              {['', 'pending', 'ok', 'error'].map((s) => (
-                <DropdownMenuItem key={s || 'any'} onClick={() => setStatus(s)}>
-                  {s || 'Any'}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Format</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Format</DropdownMenuLabel>
-              {['', 'jpg', 'jpeg', 'png', 'webp', 'heif'].map((f) => (
-                <DropdownMenuItem key={f || 'any'} onClick={() => setFormat(f)}>
-                  {f || 'Any'}
+              <DropdownMenuLabel>Thumbnail size</DropdownMenuLabel>
+              {(['XL', 'L', 'M', 'S', 'XS'] as const).map((s) => (
+                <DropdownMenuItem key={s} onClick={() => setThumbSize(s)}>
+                  {s}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -119,14 +120,6 @@ export default function AdminPage() {
           <Button variant="outline" onClick={() => setShowDetail((v) => !v)} className="whitespace-nowrap">
             {showDetail ? 'Hide details' : 'Show details'}
           </Button>
-          {/* Future: is_public and tags (disabled controls) */}
-          <div className="flex items-center gap-2 opacity-60">
-            <div className="flex items-center gap-2">
-              <Switch disabled id="is_public" />
-              <label htmlFor="is_public" className="text-sm">is_public</label>
-            </div>
-            <Input placeholder="tags (comma)" className="w-40" disabled />
-          </div>
         </div>
       </div>
 
@@ -137,7 +130,7 @@ export default function AdminPage() {
           <Gallery
             query={query}
             onSelect={(it, idx, list) => { setItems(list); setSelected(it); setSelectedIndex(idx); setShowDetail(true); }}
-            gridClassName={'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2'}
+            gridClassName={gridClassName}
           />
         </div>
         <aside className={`hidden lg:block transition-opacity duration-200 ${showDetail ? 'opacity-100' : 'opacity-0'}`}>
