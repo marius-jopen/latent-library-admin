@@ -7,10 +7,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 type QueryState = {
   q?: string;
   sort?: string; // created_at.desc
+  collectionId?: number;
 };
 
 async function fetchPage(params: QueryState & { cursor?: string }) {
-  const url = new URL('/api/images', window.location.origin);
+  const basePath = params.collectionId != null ? `/api/collections/${params.collectionId}/images` : '/api/images';
+  const url = new URL(basePath, window.location.origin);
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v as string);
   }

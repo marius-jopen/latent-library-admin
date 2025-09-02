@@ -5,15 +5,18 @@ import { Gallery } from '@/components/Gallery';
 import Lightbox from './Lightbox';
 import SearchFilterBar from '@/components/admin/SearchFilterBar';
 import AdminSidebar from '@/components/admin/AdminSidebar';
+import TopNavLinks from '@/components/admin/TopNavLinks';
 
 const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library';
 
-export default function AdminPage() {
+export default function AdminPage({ searchParams }: { searchParams?: { collectionId?: string } }) {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<string>('created_at.desc');
   const [thumbSize, setThumbSize] = useState<'XL' | 'L' | 'M' | 'S' | 'XS'>('L');
   const [selected, setSelected] = useState<import('@/components/ImageCard').ImageRow | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
+  const initialCollectionId = typeof searchParams?.collectionId === 'string' ? Number(searchParams!.collectionId) : null;
+  const [collectionId, setCollectionId] = useState<number | null>(initialCollectionId);
   const [items, setItems] = useState<import('@/components/ImageCard').ImageRow[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
@@ -31,8 +34,8 @@ export default function AdminPage() {
   }, []);
 
   const query = useMemo(
-    () => ({ q, sort }),
-    [q, sort],
+    () => ({ q, sort, collectionId: collectionId ?? undefined }),
+    [q, sort, collectionId],
   );
 
   const gridClassName = useMemo(() => {
@@ -54,10 +57,11 @@ export default function AdminPage() {
 
   return (
     <div className="p-4 space-y-4">
-      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white border-b">
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white">
         <div className="px-4">
           <header className="flex items-center justify-between gap-2 pt-2">
-            <div className="text-xl font-semibold">{appName}</div>
+            <a href="/admin" className="text-xl font-semibold">{appName}</a>
+            <TopNavLinks />
           </header>
 
           <SearchFilterBar
@@ -67,6 +71,8 @@ export default function AdminPage() {
             onChangeSize={setThumbSize}
             sort={sort as any}
             onChangeSort={setSort as any}
+            collectionId={collectionId}
+            onChangeCollectionId={setCollectionId}
           />
         </div>
       </div>

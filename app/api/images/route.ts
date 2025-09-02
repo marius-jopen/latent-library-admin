@@ -71,6 +71,7 @@ export async function GET(req: Request) {
     format: string | null;
     nsfw: boolean | null;
     metadata: unknown;
+    liked?: boolean | null;
   };
 
   const items = await Promise.all(
@@ -79,6 +80,7 @@ export async function GET(req: Request) {
       const signedUrl = await getSignedUrlForKey(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS);
       return {
         ...row,
+        liked: !!(row as any).liked,
         signedUrl,
       };
     }),
@@ -91,6 +93,21 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json({ items, nextCursor, total: count ?? null });
+}
+
+export async function PATCH(req: Request) {
+  try {
+    const body = (await req.json()) as { id: number; liked: boolean };
+    if (!body || typeof body.id !== 'number') {
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    }
+    const supabase = getSupabaseAdminClient();
+    const { error } = await supabase.from('images').update({ liked: body.liked }).eq('id', body.id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+  }
 }
 
 

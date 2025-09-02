@@ -1,6 +1,8 @@
 "use client";
 
 import { LazyImage } from './LazyImage';
+import SaveButton from '@/components/admin/SaveButton';
+import { useEffect, useState } from 'react';
 
 function formatBytes(num?: number | null): string {
   if (!num || num <= 0) return '0 B';
@@ -24,15 +26,43 @@ export type ImageRow = {
   nsfw: boolean | null;
   metadata: unknown;
   signedUrl: string | null;
+  liked?: boolean | null;
 };
 
 export function ImageCard({ item, onSelect }: { item: ImageRow; onSelect?: (item: ImageRow) => void }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
   const dims = item.width && item.height ? `${item.width}×${item.height}` : '';
+  const [liked, setLiked] = useState<boolean>(!!item.liked);
+  useEffect(() => {
+    setLiked(!!item.liked);
+  }, [item.id, item.liked]);
+
+  async function toggleLike() {
+    setLiked((v) => !v);
+    try {
+      await fetch('/api/images', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id, liked: !liked }),
+      });
+    } catch {}
+  }
 
   return (
     <div className="group overflow-hidden rounded-md bg-card/50 shadow-sm hover:shadow-md transition">
-      <button type="button" onClick={onSelect ? () => onSelect(item) : undefined} className="block w-full text-left">
+      <div
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (!onSelect) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onSelect(item);
+          }
+        }}
+        onClick={onSelect ? () => onSelect(item) : undefined}
+        className="block w-full text-left"
+      >
         <div
           className="cursor-pointer  relative w-full overflow-hidden rounded-md bg-muted"
           style={{ aspectRatio: item.width && item.height ? `${item.width}/${item.height}` : undefined }}
@@ -42,8 +72,11 @@ export function ImageCard({ item, onSelect }: { item: ImageRow; onSelect?: (item
           ) : (
             <div className="text-xs text-muted-foreground">missing</div>
           )}
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <SaveButton saved={liked} onToggle={toggleLike} imageId={item.id} />
+          </div>
         </div>
-      </button>
+      </div>
     </div>
   );
 }

@@ -22,7 +22,7 @@ export function AdminSidebar({
       <div className="h-[calc(100dvh-10rem)] sticky top-[7.5rem] overflow-auto">
         {selected ? (
           <div className="relative">
-            <button className="flex  w-full justify-end text-sm text-muted-foreground hover:underline" onClick={onClose}>
+            <button className="flex  w-full justify-end text-sm text-muted-foreground " onClick={onClose}>
               Hide
             </button>
             <ImageDetailPanel

@@ -2,6 +2,9 @@
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import SaveButton from '@/components/admin/SaveButton';
+import CollectionPicker from '@/components/admin/CollectionPicker';
+import { useEffect, useState } from 'react';
 import type { ImageRow } from './ImageCard';
 
 function formatBytes(num?: number | null): string {
@@ -14,6 +17,20 @@ function formatBytes(num?: number | null): string {
 
 export function ImageDetailPanel({ item, onOpenModal }: { item: ImageRow; onOpenModal?: () => void }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
+  const [liked, setLiked] = useState<boolean>(!!item.liked);
+  useEffect(() => {
+    setLiked(!!item.liked);
+  }, [item.id, item.liked]);
+  async function toggleLike() {
+    setLiked((v) => !v);
+    try {
+      await fetch('/api/images', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id, liked: !liked }),
+      });
+    } catch {}
+  }
   return (
     <div className="h-full flex flex-col">
       <div className="pl-3 py-3 space-y-3 overflow-auto">
@@ -25,6 +42,15 @@ export function ImageDetailPanel({ item, onOpenModal }: { item: ImageRow; onOpen
             <div className="text-sm text-muted-foreground">Signed URL unavailable</div>
           )}
         </div>
+
+        <Card>
+          <CardContent className="px-3 pt-3 pb-5">
+            <div className="flex items-center gap-2">
+              <SaveButton saved={liked} onToggle={toggleLike} imageId={item.id} />
+              <CollectionPicker imageId={item.id} />
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           {/* <CardHeader className="px-3 py-1">
