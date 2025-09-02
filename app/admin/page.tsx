@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 
-const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library Admin';
+const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library';
 
 export default function AdminPage() {
   const [q, setQ] = useState('');
@@ -39,8 +39,8 @@ export default function AdminPage() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="sticky top-0 z-30 bg-white">
-        <header className="flex items-center justify-between gap-2 py-2">
+      <div className="sticky top-0 z-30 bg-white pb-1">
+        <header className="flex items-center justify-between gap-2 pt-2">
           <div className="text-xl font-semibold">{appName}</div>
           <div className="hidden sm:block text-sm text-muted-foreground">/admin</div>
         </header>
