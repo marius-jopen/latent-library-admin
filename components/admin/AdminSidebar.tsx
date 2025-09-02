@@ -9,6 +9,7 @@ export function AdminSidebar({
   selectedIndex,
   onClose,
   onNavigate,
+  onOpenModal,
 }: {
   show: boolean;
   selected: import('@/components/ImageCard').ImageRow | null;
@@ -16,6 +17,7 @@ export function AdminSidebar({
   selectedIndex: number | null;
   onClose: () => void;
   onNavigate: (direction: 'prev' | 'next') => void;
+  onOpenModal: () => void;
 }) {
   return (
     <aside className={`hidden lg:block transition-opacity duration-200 ${show ? 'opacity-100' : 'opacity-0'}`}>
@@ -27,6 +29,7 @@ export function AdminSidebar({
             </button>
             <ImageDetailPanel
               item={selected}
+              onOpenModal={onOpenModal}
             />
             {show ? (
               <div className="opacity-50 absolute left-2 top-0 flex items-center gap-0">

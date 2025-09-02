@@ -12,16 +12,23 @@ import {
 export type ThumbSize = 'XL' | 'L' | 'M' | 'S' | 'XS';
 
 export function GridSizeSelector({ value, onChange }: { value: ThumbSize; onChange: (v: ThumbSize) => void }) {
+  const labelFor: Record<ThumbSize, string> = {
+    XL: 'Extra Large',
+    L: 'Large',
+    M: 'Medium',
+    S: 'Small',
+    XS: 'Very small',
+  };
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline">Size: {value}</Button>
+        <Button variant="outline">Size: {labelFor[value]}</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuLabel>Thumbnail size</DropdownMenuLabel>
         {(['XL', 'L', 'M', 'S', 'XS'] as const).map((s) => (
           <DropdownMenuItem key={s} onClick={() => onChange(s)}>
-            {s}
+            {labelFor[s]}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

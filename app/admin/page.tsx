@@ -12,7 +12,7 @@ const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library';
 export default function AdminPage({ searchParams }: { searchParams?: { collectionId?: string } }) {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<string>('created_at.desc');
-  const [thumbSize, setThumbSize] = useState<'XL' | 'L' | 'M' | 'S' | 'XS'>('L');
+  const [thumbSize, setThumbSize] = useState<'XL' | 'L' | 'M' | 'S' | 'XS'>('M');
   const [selected, setSelected] = useState<import('@/components/ImageCard').ImageRow | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const initialCollectionId = typeof searchParams?.collectionId === 'string' ? Number(searchParams!.collectionId) : null;
@@ -33,27 +33,51 @@ export default function AdminPage({ searchParams }: { searchParams?: { collectio
     return () => ro.disconnect();
   }, []);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showDetail) setShowDetail(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showDetail]);
+
   const query = useMemo(
     () => ({ q, sort, collectionId: collectionId ?? undefined }),
     [q, sort, collectionId],
   );
 
   const gridClassName = useMemo(() => {
-    switch (thumbSize) {
-      case 'XL':
-        return 'grid grid-cols-2 gap-2';
-      case 'L':
-        return 'grid grid-cols-4 gap-2';
-      case 'M':
-        return 'grid grid-cols-6 gap-2';
-      case 'S':
-        return 'grid grid-cols-8 gap-1';
-      case 'XS':
-        return 'grid grid-cols-10 gap-1';
-      default:
-        return 'grid grid-cols-4 gap-2';
-    }
-  }, [thumbSize]);
+    // Desired columns at full width
+    const fullCols = {
+      XL: 2,
+      L: 3,
+      M: 4,
+      S: 5,
+      XS: 8,
+    }[thumbSize];
+    // When the detail sidebar opens (~50% width), keep the same item size by halving columns
+    const cols = showDetail
+      ? (
+          thumbSize === 'XL' ? 1 :
+          thumbSize === 'L' ? 2 :
+          thumbSize === 'M' ? 2 :
+          thumbSize === 'S' ? 3 :
+          /* XS */ 4
+        )
+      : fullCols;
+    // Return a static class from the allowed set to satisfy Tailwind JIT
+    const clsMap: Record<number, string> = {
+      1: 'grid grid-cols-1 gap-2',
+      2: 'grid grid-cols-2 gap-2',
+      3: 'grid grid-cols-3 gap-2',
+      4: 'grid grid-cols-4 gap-2',
+      5: 'grid grid-cols-5 gap-2',
+      6: 'grid grid-cols-6 gap-2',
+      7: 'grid grid-cols-7 gap-2',
+      8: 'grid grid-cols-8 gap-2',
+    };
+    return clsMap[cols] || 'grid grid-cols-4 gap-2';
+  }, [thumbSize, showDetail]);
 
   return (
     <div className="p-4 space-y-4">
@@ -106,6 +130,7 @@ export default function AdminPage({ searchParams }: { searchParams?: { collectio
               setSelected(items[next] ?? selected);
             }
           }}
+          onOpenModal={() => setIsLightboxOpen(true)}
         />
       </div>
       {isLightboxOpen && selected?.signedUrl ? (

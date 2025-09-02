@@ -21,7 +21,15 @@ export default function CollectionsPage() {
   async function load() {
     const res = await fetch('/api/collections');
     if (!res.ok) return;
-    setCollections(await res.json());
+    const list = (await res.json()) as Collection[];
+    // Put Default first, keep others order afterwards
+    const sorted = [...list].sort((a, b) => {
+      const aDef = a.name.toLowerCase() === 'default' ? 0 : 1;
+      const bDef = b.name.toLowerCase() === 'default' ? 0 : 1;
+      if (aDef !== bDef) return aDef - bDef;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+    setCollections(sorted);
   }
 
   useEffect(() => {
@@ -61,7 +69,7 @@ export default function CollectionsPage() {
       <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white ">
         <div className="px-4">
           <header className="flex items-center justify-between gap-2 pt-2">
-            <a href="/admin" className="text-xl font-semibold hover:underline">{appName}</a>
+            <a href="/admin" className="text-xl font-semibold">{appName}</a>
             <TopNavLinks />
           </header>
         </div>
@@ -76,8 +84,10 @@ export default function CollectionsPage() {
         {collections.map((c) => {
           const count = c.previews?.length || 0;
           const imgs = c.previews || [];
+          const isDefault = c.name.toLowerCase() === 'default';
           return (
-            <a href={`/admin?collectionId=${c.id}`} className="rounded-md border p-0 overflow-hidden block" key={c.id}>
+            <div className="rounded-md border p-0 overflow-hidden relative" key={c.id}>
+              <a href={`/admin?collectionId=${c.id}`} className="block">
               {count === 1 ? (
                 <div className="grid grid-cols-2 grid-rows-2 aspect-[4/3] bg-muted">
                   {(() => {
@@ -132,11 +142,36 @@ export default function CollectionsPage() {
                   })}
                 </div>
               )}
-              <div className="p-3">
+              <div className="p-3 pr-14">
                 <div className="font-medium">{c.name}</div>
                 <div className="text-xs text-muted-foreground">Created {new Date(c.created_at).toLocaleString()}</div>
               </div>
-            </a>
+              </a>
+              <form
+                className="absolute bottom-3 z-20 right-2"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (isDefault) return;
+                  const btn = e.currentTarget.querySelector('button');
+                  if (btn) btn.setAttribute('disabled', 'true');
+                  try {
+                    const res = await fetch(`/api/collections/${c.id}`, { method: 'DELETE' });
+                    if (!res.ok) alert('Failed to delete collection');
+                    else setCollections((prev) => prev.filter((x) => x.id !== c.id));
+                  } finally {
+                    if (btn) btn.removeAttribute('disabled');
+                  }
+                }}
+              >
+                <button
+                  type="submit"
+                  disabled={isDefault}
+                  className={`font-medium h-8 px-3 rounded-full text-white text-xs ${isDefault ? 'bg-gray-300 cursor-not-allowed' : 'bg-destructive hover:bg-destructive/90 cursor-pointer'}`}
+                >
+                  Delete
+                </button>
+              </form>
+            </div>
           );
         })}
       </div>
