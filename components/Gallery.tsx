@@ -6,9 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 type QueryState = {
   q?: string;
-  status?: string;
-  format?: string;
-  nsfw?: 'true' | 'false' | '';
   sort?: string; // created_at.desc
 };
 

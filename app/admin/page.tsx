@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Gallery } from '@/components/Gallery';
 import Lightbox from './Lightbox';
 import SearchFilterBar from '@/components/admin/SearchFilterBar';
@@ -10,7 +10,6 @@ const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library';
 
 export default function AdminPage() {
   const [q, setQ] = useState('');
-  const [nsfw, setNsfw] = useState<'true' | 'false' | ''>('');
   const [sort, setSort] = useState<string>('created_at.desc');
   const [thumbSize, setThumbSize] = useState<'XL' | 'L' | 'M' | 'S' | 'XS'>('L');
   const [selected, setSelected] = useState<import('@/components/ImageCard').ImageRow | null>(null);
@@ -18,10 +17,22 @@ export default function AdminPage() {
   const [items, setItems] = useState<import('@/components/ImageCard').ImageRow[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const headerRef = useRef<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState<number>(0);
+
+  useEffect(() => {
+    if (!headerRef.current) return;
+    const el = headerRef.current;
+    const update = () => setHeaderHeight(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const query = useMemo(
-    () => ({ q, nsfw, sort }),
-    [q, nsfw, sort],
+    () => ({ q, sort }),
+    [q, sort],
   );
 
   const gridClassName = useMemo(() => {
@@ -43,25 +54,23 @@ export default function AdminPage() {
 
   return (
     <div className="p-4 space-y-4">
-      <div className="sticky top-0 z-30 bg-white pb-1">
-        <header className="flex items-center justify-between gap-2 pt-2">
-          <div className="text-xl font-semibold">{appName}</div>
-          <div className="hidden sm:block text-sm text-muted-foreground">/admin</div>
-        </header>
+      <div ref={headerRef} className="fixed top-0 left-0 right-0 z-30 bg-white border-b">
+        <div className="px-4">
+          <header className="flex items-center justify-between gap-2 pt-2">
+            <div className="text-xl font-semibold">{appName}</div>
+          </header>
 
-        <SearchFilterBar
-          q={q}
-          onChangeQ={setQ}
-          size={thumbSize}
-          onChangeSize={setThumbSize}
-          nsfw={nsfw}
-          onChangeNsfw={setNsfw}
-          sort={sort as any}
-          onChangeSort={setSort as any}
-          showDetail={showDetail}
-          onToggleDetail={() => setShowDetail((v) => !v)}
-        />
+          <SearchFilterBar
+            q={q}
+            onChangeQ={setQ}
+            size={thumbSize}
+            onChangeSize={setThumbSize}
+            sort={sort as any}
+            onChangeSort={setSort as any}
+          />
+        </div>
       </div>
+      <div style={{ height: headerHeight }} />
 
 
 

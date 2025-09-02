@@ -9,16 +9,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const sortOptions = [
-  'created_at.desc',
-  'created_at.asc',
-  'bytes.desc',
-  'bytes.asc',
-  'id.desc',
-  'id.asc',
-] as const;
+type SortOption = { label: string; value: string };
 
-export type SortValue = typeof sortOptions[number];
+const sortOptions: SortOption[] = [
+  { label: 'Newest first', value: 'created_at.desc' },
+  { label: 'Oldest first', value: 'created_at.asc' },
+  { label: 'Largest file', value: 'bytes.desc' },
+  { label: 'Smallest file', value: 'bytes.asc' },
+  { label: 'ID high → low', value: 'id.desc' },
+  { label: 'ID low → high', value: 'id.asc' },
+];
+
+export type SortValue = SortOption['value'];
 
 export function SortSelector({ value, onChange }: { value: SortValue; onChange: (v: SortValue) => void }) {
   return (
@@ -29,8 +31,8 @@ export function SortSelector({ value, onChange }: { value: SortValue; onChange: 
       <DropdownMenuContent align="start">
         <DropdownMenuLabel>Sort</DropdownMenuLabel>
         {sortOptions.map((s) => (
-          <DropdownMenuItem key={s} onClick={() => onChange(s)}>
-            {s}
+          <DropdownMenuItem key={s.value} onClick={() => onChange(s.value)}>
+            {s.label}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
