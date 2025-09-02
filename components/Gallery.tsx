@@ -103,9 +103,9 @@ export function Gallery({ query, onSelect, gridClassName, removedIds }: { query:
 
   return (
     <div className="space-y-3">
-      <div className="text-sm text-muted-foreground">
+      {/* <div className="text-sm text-muted-foreground">
         {total != null ? `Loaded ${loadedCount} of ${total}` : `Loaded ${loadedCount}`}
-      </div>
+      </div> */}
       <div className={gridClassName || "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"}>
         {items.map((item, idx) => (
           <div key={item.id}>

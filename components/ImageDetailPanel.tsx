@@ -15,7 +15,7 @@ function formatBytes(num?: number | null): string {
   return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
-export function ImageDetailPanel({ item, onOpenModal, currentCollectionId, onRemovedFromCollection }: { item: ImageRow; onOpenModal?: () => void; currentCollectionId?: number | null; onRemovedFromCollection?: (imageId: number) => void }) {
+export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, currentCollectionId, onRemovedFromCollection }: { item: ImageRow; onOpenModal?: () => void; onClose?: () => void; onNavigate?: (direction: 'prev' | 'next') => void; currentCollectionId?: number | null; onRemovedFromCollection?: (imageId: number) => void }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
   const [liked, setLiked] = useState<boolean>(!!item.liked);
   useEffect(() => {
@@ -34,7 +34,7 @@ export function ImageDetailPanel({ item, onOpenModal, currentCollectionId, onRem
   }
   return (
     <div className="h-full flex flex-col">
-      <div className="pl-3 py-3 space-y-3 overflow-auto">
+      <div className="pl-3 pb-3 space-y-3 overflow-auto">
         <div className="overflow-hidden rounded-md cursor-zoom-in" onClick={onOpenModal}>
           {item.signedUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -46,9 +46,42 @@ export function ImageDetailPanel({ item, onOpenModal, currentCollectionId, onRem
 
         <Card>
           <CardContent className="px-3 pt-3 pb-5">
-            <div className="flex items-center gap-2">
-              <SaveButton saved={liked} onToggle={toggleLike} imageId={item.id} />
-              <CollectionPicker imageId={item.id} currentCollectionId={currentCollectionId ?? undefined} onRemoved={onRemovedFromCollection} saved={liked} />
+            <div className="flex items-center gap-2 justify-between">
+              <div className="flex items-center gap-2">
+                <SaveButton saved={liked} onToggle={toggleLike} imageId={item.id} />
+                <CollectionPicker imageId={item.id} currentCollectionId={currentCollectionId ?? undefined} onRemoved={onRemovedFromCollection} saved={liked} />
+              </div>
+              <div className="relative">
+                <div className="flex items-center gap-2 translate-x-6 opacity-0 animate-[slidein_250ms_ease-out_forwards]">
+                  <style jsx>{`
+                    @keyframes slidein {
+                      from { transform: translateX(1.5rem); opacity: 0; }
+                      to { transform: translateX(0); opacity: 1; }
+                    }
+                  `}</style>
+                  <button
+                    className="h-8 px-3 rounded-full bg-background/80 border text-sm"
+                    onClick={onClose}
+                    aria-label="Hide"
+                  >
+                    Hide
+                  </button>
+                  <button
+                    className="h-8 w-8 rounded-full bg-background/80 border text-sm"
+                    onClick={() => onNavigate?.('prev')}
+                    aria-label="Previous"
+                  >
+                    ←
+                  </button>
+                  <button
+                    className="h-8 w-8 rounded-full bg-background/80 border text-sm"
+                    onClick={() => onNavigate?.('next')}
+                    aria-label="Next"
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

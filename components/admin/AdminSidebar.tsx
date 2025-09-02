@@ -25,36 +25,17 @@ export function AdminSidebar({
 }) {
   return (
     <aside className={`hidden lg:block transition-opacity duration-200 ${show ? 'opacity-100' : 'opacity-0'}`}>
-      <div className="h-[calc(100dvh-0rem)] sticky top-0 overflow-auto">
+      <div className="h-[calc(100dvh-0rem)] sticky top-[90px] overflow-auto">
         {selected ? (
           <div className="relative">
-            <button className="flex  w-full justify-end text-sm text-muted-foreground " onClick={onClose}>
-              Hide
-            </button>
             <ImageDetailPanel
               item={selected}
               onOpenModal={onOpenModal}
+              onClose={onClose}
+              onNavigate={onNavigate}
               currentCollectionId={currentCollectionId}
               onRemovedFromCollection={onRemovedFromCollection}
             />
-            {show ? (
-              <div className="opacity-50 absolute left-2 top-0 flex items-center gap-0">
-                <button
-                  className="h-7 w-7 rounded-full bg-background/80 backdrop-blur  text-sm"
-                  onClick={() => onNavigate('prev')}
-                  aria-label="Previous"
-                >
-                  ←
-                </button>
-                <button
-                  className="h-7 w-7 rounded-full bg-background/80 backdrop-blur  text-sm"
-                  onClick={() => onNavigate('next')}
-                  aria-label="Next"
-                >
-                  →
-                </button>
-              </div>
-            ) : null}
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
