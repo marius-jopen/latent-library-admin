@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Gallery } from '@/components/Gallery';
 import ImageDetailPanel from '@/components/ImageDetailPanel';
+import Lightbox from './Lightbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,9 @@ export default function AdminPage() {
   const [sort, setSort] = useState<string>('created_at.desc');
   const [selected, setSelected] = useState<import('@/components/ImageCard').ImageRow | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
+  const [items, setItems] = useState<import('@/components/ImageCard').ImageRow[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const nsfwOptions: { label: string; value: '' | 'true' | 'false' }[] = [
     { label: 'Any', value: '' },
@@ -132,7 +136,8 @@ export default function AdminPage() {
         <div>
           <Gallery
             query={query}
-            onSelect={(it) => { setSelected(it); setShowDetail(true); }}
+            onItemsChange={(list) => setItems(list)}
+            onSelect={(it, idx) => { setSelected(it); setSelectedIndex(idx); setShowDetail(true); }}
             gridClassName={'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2'}
           />
         </div>
@@ -144,7 +149,38 @@ export default function AdminPage() {
                   Hide
                 
                 </button>
-                <ImageDetailPanel item={selected} />
+                <ImageDetailPanel
+                  item={selected}
+                  onOpenModal={() => setIsLightboxOpen(true)}
+                />
+                {showDetail ? (
+                  <div className="opacity-50 absolute left-2 top-0 flex items-center gap-0">
+                    <button
+                      className="h-7 w-7 rounded-full bg-background/80 backdrop-blur  text-sm"
+                      onClick={() => {
+                        if (selectedIndex == null) return;
+                        const prev = selectedIndex > 0 ? selectedIndex - 1 : 0;
+                        setSelectedIndex(prev);
+                        setSelected(items[prev] ?? selected);
+                      }}
+                      aria-label="Previous"
+                    >
+                      ←
+                    </button>
+                    <button
+                      className="h-7 w-7 rounded-full bg-background/80 backdrop-blur  text-sm"
+                      onClick={() => {
+                        if (selectedIndex == null) return;
+                        const next = Math.min((items.length - 1), selectedIndex + 1);
+                        setSelectedIndex(next);
+                        setSelected(items[next] ?? selected);
+                      }}
+                      aria-label="Next"
+                    >
+                      →
+                    </button>
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
@@ -154,6 +190,23 @@ export default function AdminPage() {
           </div>
         </aside>
       </div>
+      {isLightboxOpen && selected?.signedUrl ? (
+        <Lightbox
+          src={selected.signedUrl}
+          alt={selected.s3_key}
+          onClose={() => setIsLightboxOpen(false)}
+          onPrev={selectedIndex != null && selectedIndex > 0 ? () => {
+            const prev = selectedIndex - 1;
+            setSelectedIndex(prev);
+            setSelected(items[prev] ?? selected);
+          } : undefined}
+          onNext={selectedIndex != null && selectedIndex < items.length - 1 ? () => {
+            const next = selectedIndex + 1;
+            setSelectedIndex(next);
+            setSelected(items[next] ?? selected);
+          } : undefined}
+        />
+      ) : null}
     </div>
   );
 }

@@ -22,7 +22,7 @@ async function fetchPage(params: QueryState & { cursor?: string }) {
   return (await res.json()) as { items: ImageRow[]; nextCursor: string | null; total: number | null };
 }
 
-export function Gallery({ query, onSelect, gridClassName }: { query: QueryState; onSelect?: (item: ImageRow) => void; gridClassName?: string }) {
+export function Gallery({ query, onSelect, onItemsChange, gridClassName }: { query: QueryState; onSelect?: (item: ImageRow, index: number) => void; onItemsChange?: (items: ImageRow[]) => void; gridClassName?: string }) {
   const [items, setItems] = useState<ImageRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -43,6 +43,7 @@ export function Gallery({ query, onSelect, gridClassName }: { query: QueryState;
         setNextCursor(data.nextCursor);
         setTotal(data.total);
         setInitialized(true);
+        onItemsChange?.(data.items);
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -66,7 +67,11 @@ export function Gallery({ query, onSelect, gridClassName }: { query: QueryState;
         setLoading(true);
         fetchPage({ ...(JSON.parse(stableQuery) as QueryState), cursor: nextCursor })
           .then((data) => {
-            setItems((prev) => prev.concat(data.items));
+            setItems((prev) => {
+              const merged = prev.concat(data.items);
+              onItemsChange?.(merged);
+              return merged;
+            });
             setNextCursor(data.nextCursor);
             if (data.total != null) setTotal(data.total);
           })
@@ -85,9 +90,9 @@ export function Gallery({ query, onSelect, gridClassName }: { query: QueryState;
         {total != null ? `Loaded ${loadedCount} of ${total}` : `Loaded ${loadedCount}`}
       </div>
       <div className={gridClassName || "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"}>
-        {items.map((item) => (
+        {items.map((item, idx) => (
           <div key={item.id}>
-            <ImageCard item={item} onSelect={onSelect} />
+            <ImageCard item={item} onSelect={onSelect ? () => onSelect(item, idx) : undefined} />
           </div>
         ))}
         {loading && !initialized

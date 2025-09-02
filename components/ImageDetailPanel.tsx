@@ -12,12 +12,12 @@ function formatBytes(num?: number | null): string {
   return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
-export function ImageDetailPanel({ item }: { item: ImageRow }) {
+export function ImageDetailPanel({ item, onOpenModal }: { item: ImageRow; onOpenModal?: () => void }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
   return (
     <div className="h-full flex flex-col">
       <div className="pl-3 py-3 space-y-3 overflow-auto">
-        <div className="overflow-hidden rounded-xl">
+        <div className="overflow-hidden rounded-xl cursor-zoom-in" onClick={onOpenModal}>
           {item.signedUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.signedUrl} alt={filename} className="w-full h-auto object-contain rounded-xl" />
