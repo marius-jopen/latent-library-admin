@@ -35,18 +35,6 @@ export function ImageCard({ item, onSelect }: { item: ImageRow; onSelect?: (item
   const [liked, setLiked] = useState<boolean>(!!item.liked);
   useEffect(() => {
     setLiked(!!item.liked);
-    // Ensure red pill for items in Saved collection
-    (async () => {
-      try {
-        const res = await fetch(`/api/images/${item.id}/collections`);
-        if (!res.ok) return;
-        const data = (await res.json()) as { collectionNames?: string[] };
-        if (Array.isArray(data.collectionNames)) {
-          const inSaved = data.collectionNames.some((n) => String(n).toLowerCase() === 'saved');
-          setLiked(inSaved);
-        }
-      } catch {}
-    })();
   }, [item.id, item.liked]);
 
   async function toggleLike() {

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const id = Number(params.id);
+export async function DELETE(_req: Request, context: { params: Promise<{ id: string }> }) {
+  const { id: idStr } = await context.params;
+  const id = Number(idStr);
   if (!id) return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
   const supabase = getSupabaseAdminClient();
   const { error } = await supabase.from('collections').delete().eq('id', id);

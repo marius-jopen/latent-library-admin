@@ -30,6 +30,10 @@ export async function POST(req: Request) {
     .upsert({ collection_id: col!.id, image_id: imageId }, { onConflict: 'collection_id,image_id', ignoreDuplicates: true });
   if (attachErr) return NextResponse.json({ error: attachErr.message }, { status: 500 });
 
+  // Also reflect saved state on the image row for quick UI reads
+  const { error: updateErr } = await supabase.from('images').update({ liked: true }).eq('id', imageId);
+  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+
   return NextResponse.json({ ok: true, collectionId: col!.id });
 }
 
@@ -46,6 +50,10 @@ export async function DELETE(req: Request) {
     .eq('collection_id', col.id)
     .eq('image_id', imageId);
   if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
+
+  // Reflect unsaved state on the image row
+  const { error: updateErr } = await supabase.from('images').update({ liked: false }).eq('id', imageId);
+  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
 

@@ -5,8 +5,8 @@ import { getSignedUrlForKey } from '@/lib/s3';
 const SIGNED_URL_TTL_SECONDS = Number(process.env.SIGNED_URL_TTL_SECONDS || '900');
 const S3_DEFAULT_BUCKET = process.env.S3_DEFAULT_BUCKET || 'latent-library';
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const body = (await req.json()) as { imageId?: number };
   if (!id || !body.imageId) return NextResponse.json({ error: 'Missing params' }, { status: 400 });
   const supabase = getSupabaseAdminClient();
@@ -18,8 +18,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   return NextResponse.json({ ok: true }, { status: 201 });
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function DELETE(req: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const body = (await req.json()) as { imageId?: number };
   if (!body.imageId) return NextResponse.json({ error: 'imageId required' }, { status: 400 });
   const supabase = getSupabaseAdminClient();
@@ -32,8 +32,8 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   return NextResponse.json({ ok: true });
 }
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const url = new URL(req.url);
   const limit = Math.min(Number(url.searchParams.get('limit') || '60'), 200);
   const sortParam = (url.searchParams.get('sort') as `${string}.${'asc' | 'desc'}` | null) || 'created_at.desc';

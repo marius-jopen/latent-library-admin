@@ -21,20 +21,7 @@ export function ImageDetailPanel({ item, onOpenModal, currentCollectionId, onRem
   useEffect(() => {
     setLiked(!!item.liked);
   }, [item.id, item.liked]);
-  useEffect(() => {
-    // Ensure the SaveButton reflects actual membership in Saved collection
-    (async () => {
-      try {
-        const res = await fetch(`/api/images/${item.id}/collections`);
-        if (!res.ok) return;
-        const data = (await res.json()) as { collectionNames?: string[] };
-        if (Array.isArray(data.collectionNames)) {
-          const inSaved = data.collectionNames.some((n) => String(n).toLowerCase() === 'saved');
-          setLiked(inSaved);
-        }
-      } catch {}
-    })();
-  }, [item.id]);
+  
   async function toggleLike() {
     setLiked((v) => !v);
     try {

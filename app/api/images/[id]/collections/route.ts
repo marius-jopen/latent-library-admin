@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const imageId = Number(params.id);
+export async function GET(_req: Request, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
+  const imageId = Number(id);
   if (!imageId) return NextResponse.json({ error: 'Invalid image id' }, { status: 400 });
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
