@@ -136,8 +136,7 @@ export default function AdminPage() {
         <div>
           <Gallery
             query={query}
-            onItemsChange={(list) => setItems(list)}
-            onSelect={(it, idx) => { setSelected(it); setSelectedIndex(idx); setShowDetail(true); }}
+            onSelect={(it, idx, list) => { setItems(list); setSelected(it); setSelectedIndex(idx); setShowDetail(true); }}
             gridClassName={'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2'}
           />
         </div>
