@@ -84,9 +84,9 @@ export function Gallery({ query, onSelect, gridClassName }: { query: QueryState;
       <div className="text-sm text-muted-foreground">
         {total != null ? `Loaded ${loadedCount} of ${total}` : `Loaded ${loadedCount}`}
       </div>
-      <div className={gridClassName || "columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-3"}>
+      <div className={gridClassName || "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"}>
         {items.map((item) => (
-          <div key={item.id} className="break-inside-avoid mb-3">
+          <div key={item.id}>
             <ImageCard item={item} onSelect={onSelect} />
           </div>
         ))}

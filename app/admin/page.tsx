@@ -128,19 +128,19 @@ export default function AdminPage() {
 
 
 
-      <div className={`lg:grid gap-6 transition-[grid-template-columns] duration-300 ${showDetail ? 'lg:grid-cols-[1fr_min(50vw,760px)]' : 'lg:grid-cols-[1fr_0]'}`}>
+      <div className={`lg:grid gap-0 transition-[grid-template-columns] duration-300 ${showDetail ? 'lg:grid-cols-[1fr_min(50vw,760px)]' : 'lg:grid-cols-[1fr_0]'}`}>
         <div>
           <Gallery
             query={query}
             onSelect={(it) => { setSelected(it); setShowDetail(true); }}
-            gridClassName={'columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-4'}
+            gridClassName={'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2'}
           />
         </div>
         <aside className={`hidden lg:block transition-opacity duration-200 ${showDetail ? 'opacity-100' : 'opacity-0'}`}>
           <div className="h-[calc(100dvh-10rem)] sticky top-[7.5rem] overflow-auto">
             {selected ? (
               <div className="relative">
-                <button className="flex pr-3 w-full justify-end text-sm text-muted-foreground hover:underline" onClick={() => setShowDetail(false)}>
+                <button className="flex  w-full justify-end text-sm text-muted-foreground hover:underline" onClick={() => setShowDetail(false)}>
                   Hide
                 
                 </button>

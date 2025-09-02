@@ -16,7 +16,7 @@ export function ImageDetailPanel({ item }: { item: ImageRow }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
   return (
     <div className="h-full flex flex-col">
-      <div className="p-3 space-y-3 overflow-auto">
+      <div className="pl-3 py-3 space-y-3 overflow-auto">
         <div className="overflow-hidden rounded-xl">
           {item.signedUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
