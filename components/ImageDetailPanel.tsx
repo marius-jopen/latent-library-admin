@@ -21,6 +21,27 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
   useEffect(() => {
     setLiked(!!item.liked);
   }, [item.id, item.liked]);
+
+  // Add keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        onNavigate?.('prev');
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        onNavigate?.('next');
+      }
+    };
+
+    // Add event listener when component mounts
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup event listener when component unmounts
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onNavigate]);
   
   async function toggleLike() {
     setLiked((v) => !v);
@@ -34,7 +55,7 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
   }
   return (
     <div className="h-full flex flex-col">
-      <div className="pl-3 pb-3 space-y-3 overflow-auto">
+      <div className="pl-3 pb-3 space-y-3 overflow-auto overflow-x-hidden">
         <div className="overflow-hidden rounded-md cursor-zoom-in" onClick={onOpenModal}>
           {item.signedUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -52,7 +73,7 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
                 <CollectionPicker imageId={item.id} currentCollectionId={currentCollectionId ?? undefined} onRemoved={onRemovedFromCollection} saved={liked} />
               </div>
               <div className="relative">
-                <div className="flex items-center gap-2 translate-x-6 opacity-0 animate-[slidein_250ms_ease-out_forwards]">
+                <div className="flex items-center gap-2 opacity-0 animate-[slidein_250ms_ease-out_forwards]">
                   <style jsx>{`
                     @keyframes slidein {
                       from { transform: translateX(1.5rem); opacity: 0; }
