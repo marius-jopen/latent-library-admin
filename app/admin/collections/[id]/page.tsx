@@ -9,8 +9,8 @@ const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library';
 export default function CollectionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const collectionId = Number(id);
-  const [sort, setSort] = useState<string>('created_at.desc');
-  const [thumbSize, setThumbSize] = useState<'XL' | 'L' | 'M' | 'S' | 'XS'>('L');
+  const [sort] = useState<string>('created_at.desc');
+  const [thumbSize] = useState<'XL' | 'L' | 'M' | 'S' | 'XS'>('L');
   const headerRef = useRef<HTMLDivElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
@@ -55,7 +55,7 @@ export default function CollectionDetailPage({ params }: { params: Promise<{ id:
       </div>
       <div style={{ height: headerHeight }} />
 
-      <Gallery query={query as any} gridClassName={gridClassName} />
+      <Gallery query={query} gridClassName={gridClassName} />
     </div>
   );
 }

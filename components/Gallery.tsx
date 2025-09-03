@@ -43,7 +43,7 @@ export function Gallery({ query, onSelect, gridClassName, removedIds }: { query:
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
-  const [total, setTotal] = useState<number | null>(null);
+  const [, setTotal] = useState<number | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const stableQuery = useMemo(() => JSON.stringify(query), [query]);
@@ -99,7 +99,7 @@ export function Gallery({ query, onSelect, gridClassName, removedIds }: { query:
     setItems((prev) => prev.filter((it) => !removedIds.includes(it.id)));
   }, [removedIds]);
 
-  const loadedCount = items.length;
+  // const loadedCount = items.length;
 
   return (
     <div className="space-y-3">

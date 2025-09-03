@@ -119,8 +119,8 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
             onChangeQ={setQ}
             size={thumbSize}
             onChangeSize={setThumbSize}
-            sort={sort as any}
-            onChangeSort={setSort as any}
+            sort={sort}
+            onChangeSort={setSort}
             collectionId={collectionId}
             onChangeCollectionId={setCollectionId}
           />

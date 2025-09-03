@@ -17,7 +17,7 @@ const options: { label: string; value: NsfwValue }[] = [
   { label: 'Only SFW', value: 'false' },
 ];
 
-export function NsfwSelector({ value, onChange }: { value: NsfwValue; onChange: (v: NsfwValue) => void }) {
+export function NsfwSelector({ /* value, */ onChange }: { value: NsfwValue; onChange: (v: NsfwValue) => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

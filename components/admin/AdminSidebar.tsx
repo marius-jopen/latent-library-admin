@@ -5,8 +5,8 @@ import ImageDetailPanel from '@/components/ImageDetailPanel';
 export function AdminSidebar({
   show,
   selected,
-  items,
-  selectedIndex,
+  // items,
+  // selectedIndex,
   onClose,
   onNavigate,
   onOpenModal,

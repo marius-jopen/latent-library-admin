@@ -23,7 +23,7 @@ export async function GET() {
   if (pErr) return NextResponse.json({ error: pErr.message }, { status: 500 });
 
   const map = new Map<number, Array<{ id: number; s3_bucket: string | null; s3_key: string }>>();
-  (previews ?? []).forEach((row: any) => {
+  (previews ?? []).forEach((row: Record<string, unknown>) => {
     const arr = map.get(row.collection_id) || [];
     if (row.images) arr.push(row.images);
     map.set(row.collection_id, arr);
@@ -34,7 +34,7 @@ export async function GET() {
     previews: map.get(c.id) || [],
   }));
   // Ensure "Saved" appears first
-  withPreviews = withPreviews.sort((a: any, b: any) => {
+  withPreviews = withPreviews.sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
     const aP = String(a.name).toLowerCase() === 'saved' ? 0 : 1;
     const bP = String(b.name).toLowerCase() === 'saved' ? 0 : 1;
     if (aP !== bP) return aP - bP;

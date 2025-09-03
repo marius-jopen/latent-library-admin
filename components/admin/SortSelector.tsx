@@ -22,7 +22,7 @@ const sortOptions: SortOption[] = [
 
 export type SortValue = SortOption['value'];
 
-export function SortSelector({ value, onChange }: { value: SortValue; onChange: (v: SortValue) => void }) {
+export function SortSelector({ /* value, */ onChange }: { value: SortValue; onChange: (v: SortValue) => void }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

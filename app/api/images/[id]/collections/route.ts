@@ -11,8 +11,8 @@ export async function GET(_req: Request, context: { params: Promise<{ id: string
     .select('collection_id, collections(name)')
     .eq('image_id', imageId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  const ids = (data ?? []).map((r: any) => r.collection_id as number);
-  const names = (data ?? []).map((r: any) => r.collections?.name).filter(Boolean) as string[];
+  const ids = (data ?? []).map((r: Record<string, unknown>) => r.collection_id as number);
+  const names = (data ?? []).map((r: Record<string, unknown>) => (r.collections as Record<string, unknown>)?.name).filter(Boolean) as string[];
   return NextResponse.json({ collectionIds: ids, collectionNames: names });
 }
 

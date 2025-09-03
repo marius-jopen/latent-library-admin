@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  // DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -15,7 +15,7 @@ import {
 type Collection = { id: number; name: string };
 type Props = { imageId: number; currentCollectionId?: number | null; onRemoved?: (imageId: number) => void; saved?: boolean };
 
-export function CollectionPicker({ imageId, currentCollectionId, onRemoved, saved }: Props) {
+export function CollectionPicker({ imageId, /* currentCollectionId, */ onRemoved, saved }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([]);

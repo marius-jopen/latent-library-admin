@@ -1,7 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import SaveButton from '@/components/admin/SaveButton';
 import CollectionPicker from '@/components/admin/CollectionPicker';
 import { useEffect, useState } from 'react';
@@ -59,7 +58,7 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
         <div className="overflow-hidden rounded-md cursor-zoom-in" onClick={onOpenModal}>
           {item.signedUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.signedUrl} alt={filename} className="w-full h-auto object-contain rounded-md" />
+            <img src={item.signedUrl} alt={filename} className="w-full h-auto object-contain rounded-md shadow-sm" />
           ) : (
             <div className="text-sm text-muted-foreground">Signed URL unavailable</div>
           )}

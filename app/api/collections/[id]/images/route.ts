@@ -12,8 +12,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
   const supabase = getSupabaseAdminClient();
   const { error } = await supabase
     .from('collection_images')
-    // @ts-ignore - typed tables not generated here
-    .insert({ collection_id: Number(id), image_id: Number(body.imageId) } as any);
+    // @ts-expect-error - typed tables not generated here
+    .insert({ collection_id: Number(id), image_id: Number(body.imageId) });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true }, { status: 201 });
 }
@@ -55,7 +55,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   if (cursor) {
     const isAsc = direction === 'asc';
     const op = isAsc ? 'gt' : 'lt';
-    // @ts-ignore dynamic operator
+    // @ts-expect-error dynamic operator
     query = query[op](sortField, sortField === 'id' ? Number(cursor) : cursor);
   }
 
@@ -64,7 +64,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   const { data: rows, error, count } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const items = await Promise.all((rows ?? []).map(async (row: any) => {
+  const items = await Promise.all((rows ?? []).map(async (row: Record<string, unknown>) => {
     const bucket = row.s3_bucket || S3_DEFAULT_BUCKET;
     const signedUrl = await getSignedUrlForKey(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS);
     return { ...row, signedUrl };
@@ -72,7 +72,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
   let nextCursor: string | null = null;
   if (rows && rows.length === limit) {
-    const last = rows[rows.length - 1] as any;
+    const last = rows[rows.length - 1] as Record<string, unknown>;
     nextCursor = String(last[sortField] ?? last.id);
   }
 

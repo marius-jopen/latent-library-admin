@@ -30,7 +30,7 @@ export function LazyImage({ src, alt, className, fit = 'cover' }: LazyImageProps
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [src]);
 
   return (
     <div ref={containerRef} className={className}>

@@ -80,7 +80,7 @@ export async function GET(req: Request) {
       const signedUrl = await getSignedUrlForKey(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS);
       return {
         ...row,
-        liked: !!(row as any).liked,
+        liked: !!(row as Record<string, unknown>).liked,
         signedUrl,
       };
     }),

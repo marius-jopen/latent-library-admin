@@ -4,13 +4,13 @@ import { LazyImage } from './LazyImage';
 import SaveButton from '@/components/admin/SaveButton';
 import { useEffect, useState } from 'react';
 
-function formatBytes(num?: number | null): string {
-  if (!num || num <= 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(num) / Math.log(1024));
-  const val = num / Math.pow(1024, i);
-  return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
-}
+// function formatBytes(num?: number | null): string {
+//   if (!num || num <= 0) return '0 B';
+//   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+//   const i = Math.floor(Math.log(num) / Math.log(1024));
+//   const val = num / Math.pow(1024, i);
+//   return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
+// }
 
 export type ImageRow = {
   id: number;
@@ -31,7 +31,7 @@ export type ImageRow = {
 
 export function ImageCard({ item, onSelect }: { item: ImageRow; onSelect?: (item: ImageRow) => void }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
-  const dims = item.width && item.height ? `${item.width}×${item.height}` : '';
+  // const dims = item.width && item.height ? `${item.width}×${item.height}` : '';
   const [liked, setLiked] = useState<boolean>(!!item.liked);
   useEffect(() => {
     setLiked(!!item.liked);

@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const name = (collectionName || 'Saved').trim();
 
   // Find or create collection by name
-  let { data: col, error: findErr } = await supabase
+  const { data: col, error: findErr } = await supabase
     .from('collections')
     .select('id, name')
     .eq('name', name)
@@ -20,13 +20,13 @@ export async function POST(req: Request) {
       .select('id, name')
       .single();
     if (createErr) return NextResponse.json({ error: createErr.message }, { status: 500 });
-    col = created as any;
+    col = created;
   }
 
   // Attach image to collection (idempotent)
   const { error: attachErr } = await supabase
     .from('collection_images')
-    // @ts-ignore - upsert options typing
+    // @ts-expect-error - upsert options typing
     .upsert({ collection_id: col!.id, image_id: imageId }, { onConflict: 'collection_id,image_id', ignoreDuplicates: true });
   if (attachErr) return NextResponse.json({ error: attachErr.message }, { status: 500 });
 
