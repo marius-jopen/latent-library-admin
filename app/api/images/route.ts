@@ -102,7 +102,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
     const supabase = getSupabaseAdminClient();
-    const { error } = await supabase.from('images').update({ liked: body.liked }).eq('id', body.id);
+    const { error } = await supabase.from('images').update({ liked: body.liked } as never).eq('id', body.id);
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ ok: true });
   } catch (e: unknown) {

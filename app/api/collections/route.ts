@@ -12,7 +12,7 @@ export async function GET() {
 
   // For simplicity, fetch previews by joining collection_images → images; signed URLs are handled client-side today.
   // To avoid S3 calls here, we just return the image rows needed for previews.
-  const collectionIds = (cols ?? []).map((c) => c.id);
+  const collectionIds = (cols ?? []).map((c: { id: number }) => c.id);
   if (!collectionIds.length) return NextResponse.json(cols ?? []);
 
   const { data: previews, error: pErr } = await supabase
@@ -24,12 +24,13 @@ export async function GET() {
 
   const map = new Map<number, Array<{ id: number; s3_bucket: string | null; s3_key: string }>>();
   (previews ?? []).forEach((row: Record<string, unknown>) => {
-    const arr = map.get(row.collection_id) || [];
-    if (row.images) arr.push(row.images);
-    map.set(row.collection_id, arr);
+    const collectionId = row.collection_id as number;
+    const arr = map.get(collectionId) || [];
+    if (row.images) arr.push(row.images as { id: number; s3_bucket: string | null; s3_key: string });
+    map.set(collectionId, arr);
   });
 
-  let withPreviews = (cols ?? []).map((c) => ({
+  let withPreviews = (cols ?? []).map((c: { id: number; name: string; description: string | null; created_at: string }) => ({
     ...c,
     previews: map.get(c.id) || [],
   }));
@@ -38,7 +39,7 @@ export async function GET() {
     const aP = String(a.name).toLowerCase() === 'saved' ? 0 : 1;
     const bP = String(b.name).toLowerCase() === 'saved' ? 0 : 1;
     if (aP !== bP) return aP - bP;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return new Date(b.created_at as string).getTime() - new Date(a.created_at as string).getTime();
   });
 
   return NextResponse.json(withPreviews);
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
   const supabase = getSupabaseAdminClient();
   const { data, error } = await supabase
     .from('collections')
-    .insert({ name: body.name.trim(), description: body.description ?? null })
+    .insert({ name: body.name.trim(), description: body.description ?? null } as never)
     .select('*')
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

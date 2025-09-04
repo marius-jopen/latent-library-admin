@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   if (findErr) {
     const { data: created, error: createErr } = await supabase
       .from('collections')
-      .insert({ name })
+      .insert({ name } as never)
       .select('id, name')
       .single();
     if (createErr) return NextResponse.json({ error: createErr.message }, { status: 500 });
@@ -33,10 +33,10 @@ export async function POST(req: Request) {
   if (attachErr) return NextResponse.json({ error: attachErr.message }, { status: 500 });
 
   // Also reflect saved state on the image row for quick UI reads
-  const { error: updateErr } = await supabase.from('images').update({ liked: true }).eq('id', imageId);
+  const { error: updateErr } = await supabase.from('images').update({ liked: true } as never).eq('id', imageId);
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true, collectionId: col!.id });
+  return NextResponse.json({ ok: true, collectionId: (col as { id: number } | null)?.id });
 }
 
 export async function DELETE(req: Request) {
@@ -49,12 +49,12 @@ export async function DELETE(req: Request) {
   const { error: delErr } = await supabase
     .from('collection_images')
     .delete()
-    .eq('collection_id', col.id)
+    .eq('collection_id', (col as { id: number }).id)
     .eq('image_id', imageId);
   if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
 
   // Reflect unsaved state on the image row
-  const { error: updateErr } = await supabase.from('images').update({ liked: false }).eq('id', imageId);
+  const { error: updateErr } = await supabase.from('images').update({ liked: false } as never).eq('id', imageId);
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

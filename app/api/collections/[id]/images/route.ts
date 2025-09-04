@@ -55,7 +55,6 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   if (cursor) {
     const isAsc = direction === 'asc';
     const op = isAsc ? 'gt' : 'lt';
-    // @ts-expect-error dynamic operator
     query = query[op](sortField, sortField === 'id' ? Number(cursor) : cursor);
   }
 
@@ -65,8 +64,8 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const items = await Promise.all((rows ?? []).map(async (row: Record<string, unknown>) => {
-    const bucket = row.s3_bucket || S3_DEFAULT_BUCKET;
-    const signedUrl = await getSignedUrlForKey(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS);
+    const bucket = (row.s3_bucket as string) || S3_DEFAULT_BUCKET;
+    const signedUrl = await getSignedUrlForKey(bucket, row.s3_key as string, SIGNED_URL_TTL_SECONDS);
     return { ...row, signedUrl };
   }));
 
