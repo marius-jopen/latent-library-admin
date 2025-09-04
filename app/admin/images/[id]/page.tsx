@@ -1,5 +1,5 @@
 import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
-import { getSignedUrlForKey } from '@/lib/s3';
+import { getImageUrl } from '@/lib/s3';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -46,7 +46,7 @@ export default async function ImageDetailPage({ params }: { params: { id: string
   const row = data as ImageRow;
 
   const bucket = row.s3_bucket || S3_DEFAULT_BUCKET;
-  const signedUrl = await getSignedUrlForKey(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS);
+  const imageUrl = await getImageUrl(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS, false);
   const filename = row.s3_key?.split('/').pop() || row.s3_key;
 
   return (
@@ -68,11 +68,11 @@ export default async function ImageDetailPage({ params }: { params: { id: string
           </CardHeader>
           <CardContent className="p-3">
             <div className="bg-muted flex items-center justify-center max-h-[80vh]">
-              {signedUrl ? (
+              {imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={signedUrl} alt={filename} className="max-h-[80vh] w-auto object-contain" />
+                <img src={imageUrl} alt={filename} className="max-h-[80vh] w-auto object-contain" />
               ) : (
-                <div className="text-sm text-muted-foreground">Signed URL unavailable</div>
+                <div className="text-sm text-muted-foreground">Image URL unavailable</div>
               )}
             </div>
           </CardContent>

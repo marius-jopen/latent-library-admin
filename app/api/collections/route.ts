@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
+import { getImageUrl } from '@/lib/s3';
+
+const SIGNED_URL_TTL_SECONDS = Number(process.env.SIGNED_URL_TTL_SECONDS || '900');
+const S3_DEFAULT_BUCKET = process.env.S3_DEFAULT_BUCKET || 'latent-library';
 
 export async function GET() {
   const supabase = getSupabaseAdminClient();
@@ -22,13 +26,20 @@ export async function GET() {
     .limit(4, { foreignTable: 'images' });
   if (pErr) return NextResponse.json({ error: pErr.message }, { status: 500 });
 
-  const map = new Map<number, Array<{ id: number; s3_bucket: string | null; s3_key: string }>>();
-  (previews ?? []).forEach((row: Record<string, unknown>) => {
+  const map = new Map<number, Array<{ id: number; s3_bucket: string | null; s3_key: string; signedUrl?: string }>>();
+  
+  // Process previews and generate CDN URLs
+  await Promise.all((previews ?? []).map(async (row: Record<string, unknown>) => {
     const collectionId = row.collection_id as number;
     const arr = map.get(collectionId) || [];
-    if (row.images) arr.push(row.images as { id: number; s3_bucket: string | null; s3_key: string });
-    map.set(collectionId, arr);
-  });
+    if (row.images) {
+      const image = row.images as { id: number; s3_bucket: string | null; s3_key: string };
+      const bucket = image.s3_bucket || S3_DEFAULT_BUCKET;
+      const imageUrl = await getImageUrl(bucket, image.s3_key, SIGNED_URL_TTL_SECONDS, false);
+      arr.push({ ...image, signedUrl: imageUrl || undefined });
+      map.set(collectionId, arr);
+    }
+  }));
 
   let withPreviews = (cols ?? []).map((c: { id: number; name: string; description: string | null; created_at: string }) => ({
     ...c,

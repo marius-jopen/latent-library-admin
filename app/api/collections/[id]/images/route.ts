@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
-import { getSignedUrlForKey } from '@/lib/s3';
+import { getImageUrl } from '@/lib/s3';
 
 const SIGNED_URL_TTL_SECONDS = Number(process.env.SIGNED_URL_TTL_SECONDS || '900');
 const S3_DEFAULT_BUCKET = process.env.S3_DEFAULT_BUCKET || 'latent-library';
@@ -65,8 +65,8 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
   const items = await Promise.all((rows ?? []).map(async (row: Record<string, unknown>) => {
     const bucket = (row.s3_bucket as string) || S3_DEFAULT_BUCKET;
-    const signedUrl = await getSignedUrlForKey(bucket, row.s3_key as string, SIGNED_URL_TTL_SECONDS);
-    return { ...row, signedUrl };
+    const imageUrl = await getImageUrl(bucket, row.s3_key as string, SIGNED_URL_TTL_SECONDS, false);
+    return { ...row, signedUrl: imageUrl };
   }));
 
   let nextCursor: string | null = null;

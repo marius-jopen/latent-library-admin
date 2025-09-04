@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
-import { getSignedUrlForKey } from '@/lib/s3';
+import { getImageUrl } from '@/lib/s3';
 
 const DEFAULT_PAGE_SIZE = Number(process.env.PAGE_SIZE || '60');
 const SIGNED_URL_TTL_SECONDS = Number(process.env.SIGNED_URL_TTL_SECONDS || '900');
@@ -77,11 +77,11 @@ export async function GET(req: Request) {
   const items = await Promise.all(
     (rows as ImageRow[] | null | undefined ?? []).map(async (row) => {
       const bucket = row.s3_bucket || S3_DEFAULT_BUCKET;
-      const signedUrl = await getSignedUrlForKey(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS);
+      const imageUrl = await getImageUrl(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS, false);
       return {
         ...row,
         liked: !!(row as Record<string, unknown>).liked,
-        signedUrl,
+        signedUrl: imageUrl,
       };
     }),
   );
