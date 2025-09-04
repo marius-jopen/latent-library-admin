@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   const name = (collectionName || 'Saved').trim();
 
   // Find or create collection by name
-  const { data: col, error: findErr } = await supabase
+  let { data: col, error: findErr } = await supabase
     .from('collections')
     .select('id, name')
     .eq('name', name)
