@@ -15,7 +15,7 @@ function formatBytes(num?: number | null): string {
   return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
-export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, currentCollectionId, onRemovedFromCollection }: { item: ImageRow; onOpenModal?: () => void; onClose?: () => void; onNavigate?: (direction: 'prev' | 'next') => void; currentCollectionId?: number | null; onRemovedFromCollection?: (imageId: number) => void }) {
+export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, currentCollectionId, onRemovedFromCollection, onTagClick }: { item: ImageRow; onOpenModal?: () => void; onClose?: () => void; onNavigate?: (direction: 'prev' | 'next') => void; currentCollectionId?: number | null; onRemovedFromCollection?: (imageId: number) => void; onTagClick?: (tag: string) => void }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
   const [liked, setLiked] = useState<boolean>(!!item.liked);
   useEffect(() => {
@@ -112,7 +112,11 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
             <CardContent className="px-3 py-3">
               <div className="text-sm">
                 <div className="font-semibold text-xs text-muted-foreground mb-2">Caption</div>
-                <div className="text-sm leading-relaxed">{extractCaptionText(item.caption)}</div>
+                <div className="text-sm leading-relaxed">
+                  {extractCaptionText(item.caption || '')
+                    .replace(/^\{'<MORE_DETAILED_CAPTION>': "/, '')
+                    .replace(/"\}$/, '')}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -125,12 +129,13 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
                 <div className="font-semibold text-xs text-muted-foreground mb-2">Tags</div>
                 <div className="flex flex-wrap gap-1">
                   {item.tags.map((tag, index) => (
-                    <span
+                    <button
                       key={index}
-                      className="inline-block px-2 py-1 text-xs bg-muted rounded-md text-muted-foreground"
+                      onClick={() => onTagClick?.(tag)}
+                      className="inline-block px-2 py-1 text-xs bg-muted rounded-md text-muted-foreground hover:bg-muted/80 hover:text-foreground transition-colors cursor-pointer"
                     >
                       {tag}
-                    </span>
+                    </button>
                   ))}
                 </div>
               </div>

@@ -3,6 +3,8 @@
  * Handles various caption formats and returns just the text content
  */
 export function extractCaptionText(caption: string): string {
+  if (!caption) return '';
+  
   try {
     // Try to parse as JSON first
     const parsed = JSON.parse(caption);
@@ -28,7 +30,17 @@ export function extractCaptionText(caption: string): string {
     // If parsing failed or no string found, return original
     return caption;
   } catch {
-    // If not JSON, return as-is
-    return caption;
+    // If not JSON, try to clean up common patterns
+    // Remove JSON-like structures that might be displayed as strings
+    let cleaned = caption;
+    
+    // Remove patterns like {'<MORE_DETAILED_CAPTION>': "..."}
+    cleaned = cleaned.replace(/^\s*\{\s*['"`]?<MORE_DETAILED_CAPTION>['"`]?\s*:\s*['"`]([^'"]*)['"`]\s*\}\s*$/, '$1');
+    
+    // Remove other common JSON patterns
+    cleaned = cleaned.replace(/^\s*\{\s*['"`]?caption['"`]?\s*:\s*['"`]([^'"]*)['"`]\s*\}\s*$/, '$1');
+    cleaned = cleaned.replace(/^\s*\{\s*['"`]?description['"`]?\s*:\s*['"`]([^'"]*)['"`]\s*\}\s*$/, '$1');
+    
+    return cleaned;
   }
 }

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { getCdnUrl, getOptimizedCdnUrl } from './cdn';
+import { getCdnUrl, getOptimizedCdnUrl, getCdnType } from './cdn';
 
 let s3Client: S3Client | null = null;
 
@@ -52,24 +52,35 @@ async function testCdnUrl(url: string): Promise<boolean> {
  * @param bucket - The S3 bucket name
  * @param key - The S3 object key
  * @param ttlSeconds - TTL for fallback signed URL
- * @param useCdn - Whether to use CDN (default: false for now)
+ * @param useCdn - Whether to use CDN (default: true)
  * @returns The CDN URL or signed URL
  */
 export async function getImageUrl(
   bucket: string,
   key: string,
   ttlSeconds: number,
-  useCdn: boolean = false // Changed to false by default to fix broken images
+  useCdn: boolean = true // Enable CDN by default
 ): Promise<string | null> {
   if (useCdn) {
     const cdnUrl = getCdnUrl(key);
-    // Test if CDN is working (optional - can be removed for production)
-    const isWorking = await testCdnUrl(cdnUrl);
-    if (isWorking) {
+    
+    // For CloudFront, we can be more confident it will work with OAI
+    // For Bunny CDN, we need to test if it's properly configured
+    const cdnType = getCdnType();
+    
+    if (cdnType === 'cloudfront') {
+      // CloudFront with OAI should work reliably with private S3 buckets
       return cdnUrl;
+    } else {
+      // Test if Bunny CDN is working (this will fail if not properly configured)
+      const isWorking = await testCdnUrl(cdnUrl);
+      if (isWorking) {
+        return cdnUrl;
+      }
+      
+      // Fallback to S3 signed URLs if CDN is not properly configured
+      console.warn(`Bunny CDN not accessible, falling back to S3 signed URL: ${cdnUrl}`);
     }
-    // Fallback to S3 if CDN fails
-    console.warn(`CDN URL failed, falling back to S3: ${cdnUrl}`);
   }
   
   return getSignedUrlForKey(bucket, key, ttlSeconds);

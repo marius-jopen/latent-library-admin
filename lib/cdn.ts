@@ -1,17 +1,24 @@
 import 'server-only';
 
 /**
- * Bunny CDN utility functions
+ * CDN utility functions supporting both Bunny CDN and AWS CloudFront
  * 
- * Bunny CDN provides a simple URL structure:
- * https://{pull-zone-hostname}/{path-to-file}
+ * CloudFront provides better integration with private S3 buckets:
+ * - CloudFront Distribution Domain: {distribution-id}.cloudfront.net
+ * - Origin: https://latent-library.s3.eu-central-1.amazonaws.com
+ * - Supports OAI (Origin Access Identity) for private S3 access
  * 
- * For your setup:
+ * Bunny CDN (fallback):
  * - Pull Zone Hostname: latent-library.b-cdn.net
  * - Origin: https://latent-library.s3.eu-central-1.amazonaws.com
  */
 
+const CLOUDFRONT_DOMAIN = process.env.CLOUDFRONT_DOMAIN;
 const BUNNY_CDN_HOSTNAME = process.env.BUNNY_CDN_HOSTNAME || 'latent-library.b-cdn.net';
+
+// Use CloudFront if available, otherwise fall back to Bunny CDN
+const CDN_HOSTNAME = CLOUDFRONT_DOMAIN || BUNNY_CDN_HOSTNAME;
+const CDN_TYPE = CLOUDFRONT_DOMAIN ? 'cloudfront' : 'bunny';
 
 /**
  * Generate a CDN URL for an S3 object
@@ -24,7 +31,7 @@ export function getCdnUrl(s3Key: string): string {
   const cleanKey = s3Key.startsWith('/') ? s3Key.slice(1) : s3Key;
   
   // Construct the CDN URL
-  return `https://${BUNNY_CDN_HOSTNAME}/${cleanKey}`;
+  return `https://${CDN_HOSTNAME}/${cleanKey}`;
 }
 
 /**
@@ -67,7 +74,15 @@ export function getOptimizedCdnUrl(
  * @returns True if it's a CDN URL
  */
 export function isCdnUrl(url: string): boolean {
-  return url.includes(BUNNY_CDN_HOSTNAME);
+  return url.includes(CDN_HOSTNAME);
+}
+
+/**
+ * Get the CDN type being used
+ * @returns 'cloudfront' or 'bunny'
+ */
+export function getCdnType(): string {
+  return CDN_TYPE;
 }
 
 /**

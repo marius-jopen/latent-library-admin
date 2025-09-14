@@ -170,6 +170,7 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
               }
             }
           }}
+          onTagClick={(tag) => setQ(tag)}
         />
       </div>
       {isLightboxOpen && selected?.signedUrl ? (
