@@ -36,18 +36,6 @@ export async function getSignedUrlForKey(
 }
 
 /**
- * Test if CDN is working by checking if a URL is accessible
- */
-async function testCdnUrl(url: string): Promise<boolean> {
-  try {
-    const response = await fetch(url, { method: 'HEAD' });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Get a CDN URL for an S3 object, with fallback to signed URL
  * @param bucket - The S3 bucket name
  * @param key - The S3 object key

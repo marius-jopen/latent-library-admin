@@ -17,7 +17,7 @@ const CLOUDFRONT_DOMAIN = process.env.CLOUDFRONT_DOMAIN;
 const BUNNY_CDN_HOSTNAME = process.env.BUNNY_CDN_HOSTNAME || 'latent-library.b-cdn.net';
 
 // Use Bunny CDN if available, otherwise fall back to CloudFront
-const CDN_HOSTNAME = BUNNY_CDN_HOSTNAME || CLOUDFRONT_DOMAIN;
+const CDN_HOSTNAME = BUNNY_CDN_HOSTNAME || CLOUDFRONT_DOMAIN || 'latent-library.b-cdn.net';
 const CDN_TYPE = BUNNY_CDN_HOSTNAME ? 'bunny' : 'cloudfront';
 
 /**

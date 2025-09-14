@@ -6,6 +6,7 @@ import Lightbox from './Lightbox';
 import SearchFilterBar from '@/components/admin/SearchFilterBar';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import TopNavLinks from '@/components/admin/TopNavLinks';
+import { useDebounce } from '@/hooks/useDebounce';
 
 const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library';
 
@@ -25,6 +26,9 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
   const headerRef = useRef<HTMLDivElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState<number>(0);
 
+  // Debounce search query for live search (300ms delay)
+  const debouncedQ = useDebounce(q, 300);
+
   useEffect(() => {
     if (!headerRef.current) return;
     const el = headerRef.current;
@@ -38,16 +42,28 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      // Priority: close lightbox first if open, otherwise close sidebar
+      
+      // Priority 1: Close lightbox if open
       if (isLightboxOpen) {
         setIsLightboxOpen(false);
         return;
       }
-      if (showDetail) setShowDetail(false);
+      
+      // Priority 2: Close sidebar if open
+      if (showDetail) {
+        setShowDetail(false);
+        return;
+      }
+      
+      // Priority 3: Clear search bar if there's text
+      if (q) {
+        setQ('');
+        return;
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [isLightboxOpen, showDetail]);
+  }, [isLightboxOpen, showDetail, q]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -68,8 +84,8 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
   }, [collectionId, selected]);
 
   const query = useMemo(
-    () => ({ q, sort, collectionId: collectionId ?? undefined }),
-    [q, sort, collectionId],
+    () => ({ q: debouncedQ, sort, collectionId: collectionId ?? undefined }),
+    [debouncedQ, sort, collectionId],
   );
 
   const gridClassName = useMemo(() => {
