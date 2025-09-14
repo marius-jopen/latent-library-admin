@@ -5,6 +5,7 @@ import SaveButton from '@/components/admin/SaveButton';
 import CollectionPicker from '@/components/admin/CollectionPicker';
 import { useEffect, useState } from 'react';
 import type { ImageRow } from './ImageCard';
+import { extractCaptionText } from '@/lib/captionUtils';
 
 function formatBytes(num?: number | null): string {
   if (!num || num <= 0) return '0 B';
@@ -111,7 +112,7 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
             <CardContent className="px-3 py-3">
               <div className="text-sm">
                 <div className="font-semibold text-xs text-muted-foreground mb-2">Caption</div>
-                <div className="text-sm leading-relaxed">{item.caption}</div>
+                <div className="text-sm leading-relaxed">{extractCaptionText(item.caption)}</div>
               </div>
             </CardContent>
           </Card>

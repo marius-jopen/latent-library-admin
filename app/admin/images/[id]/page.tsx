@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { extractCaptionText } from '@/lib/captionUtils';
 
 const SIGNED_URL_TTL_SECONDS = Number(process.env.SIGNED_URL_TTL_SECONDS || '900');
 const S3_DEFAULT_BUCKET = process.env.S3_DEFAULT_BUCKET || 'latent-library';
@@ -29,6 +30,7 @@ type ImageRow = {
   format: string | null;
   nsfw: boolean | null;
   metadata: unknown;
+  caption?: string | null;
 };
 
 export default async function ImageDetailPage({ params }: { params: { id: string } }) {
@@ -77,6 +79,17 @@ export default async function ImageDetailPage({ params }: { params: { id: string
             </div>
           </CardContent>
         </Card>
+
+        {row.caption && (
+          <Card>
+            <CardHeader className="p-3 pb-0">
+              <div className="font-semibold">Caption</div>
+            </CardHeader>
+            <CardContent className="p-3">
+              <div className="text-sm leading-relaxed">{extractCaptionText(row.caption)}</div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="p-3 pb-0">
