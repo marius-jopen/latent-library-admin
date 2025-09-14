@@ -80,7 +80,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
   const items = await Promise.all((rows ?? []).map(async (row: Record<string, unknown>) => {
     const bucket = (row.s3_bucket as string) || S3_DEFAULT_BUCKET;
-    const imageUrl = await getImageUrl(bucket, row.s3_key as string, SIGNED_URL_TTL_SECONDS, false);
+    const imageUrl = await getImageUrl(bucket, row.s3_key as string, SIGNED_URL_TTL_SECONDS, true);
     return { ...row, signedUrl: imageUrl };
   }));
 

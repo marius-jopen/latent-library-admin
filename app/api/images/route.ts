@@ -89,7 +89,7 @@ export async function GET(req: Request) {
   const items = await Promise.all(
     (rows as ImageRow[] | null | undefined ?? []).map(async (row) => {
       const bucket = row.s3_bucket || S3_DEFAULT_BUCKET;
-      const imageUrl = await getImageUrl(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS, false);
+      const imageUrl = await getImageUrl(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS, true);
       return {
         ...row,
         liked: !!(row as Record<string, unknown>).liked,

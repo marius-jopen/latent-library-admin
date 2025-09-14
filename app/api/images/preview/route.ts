@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   const bucket = url.searchParams.get('bucket') || S3_DEFAULT_BUCKET;
   const key = url.searchParams.get('key');
   if (!key) return new NextResponse('Missing key', { status: 400 });
-  const imageUrl = await getImageUrl(bucket, key, SIGNED_URL_TTL_SECONDS, false);
+  const imageUrl = await getImageUrl(bucket, key, SIGNED_URL_TTL_SECONDS, true);
   if (!imageUrl) return new NextResponse('Not found', { status: 404 });
   return NextResponse.redirect(imageUrl, { status: 302 });
 }

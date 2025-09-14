@@ -26,6 +26,10 @@ ADMIN_PASSWORD=change-me
 S3_DEFAULT_BUCKET=latent-library
 PAGE_SIZE=60
 SIGNED_URL_TTL_SECONDS=900
+
+# CDN Configuration (optional)
+CLOUDFRONT_DOMAIN=your-distribution-id.cloudfront.net
+BUNNY_CDN_HOSTNAME=latent-library.b-cdn.net
 ```
 
 3) Run dev
