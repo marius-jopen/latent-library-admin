@@ -90,10 +90,26 @@ export async function GET(req: Request) {
     (rows as ImageRow[] | null | undefined ?? []).map(async (row) => {
       const bucket = row.s3_bucket || S3_DEFAULT_BUCKET;
       const imageUrl = await getImageUrl(bucket, row.s3_key, SIGNED_URL_TTL_SECONDS, true);
+      
+      // Generate optimized URL for grid view (smaller images)
+      const { getOptimizedCdnUrl, getCdnType } = await import('@/lib/cdn');
+      const cdnType = getCdnType();
+      let optimizedUrl = imageUrl;
+      
+      if (cdnType === 'bunny') {
+        // Use Bunny CDN optimization for grid view
+        optimizedUrl = getOptimizedCdnUrl(row.s3_key, {
+          width: 400, // Optimized for grid display
+          height: 400,
+          quality: 80,
+          format: 'webp'
+        });
+      }
+      
       return {
         ...row,
         liked: !!(row as Record<string, unknown>).liked,
-        signedUrl: imageUrl,
+        signedUrl: optimizedUrl,
       };
     }),
   );

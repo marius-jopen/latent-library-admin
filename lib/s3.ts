@@ -63,23 +63,15 @@ export async function getImageUrl(
 ): Promise<string | null> {
   if (useCdn) {
     const cdnUrl = getCdnUrl(key);
-    
-    // For CloudFront, we can be more confident it will work with OAI
-    // For Bunny CDN, we need to test if it's properly configured
     const cdnType = getCdnType();
     
-    if (cdnType === 'cloudfront') {
+    if (cdnType === 'bunny') {
+      // Bunny CDN pulling from CloudFront should work reliably
+      // Since CloudFront is public, Bunny CDN can access it without issues
+      return cdnUrl;
+    } else if (cdnType === 'cloudfront') {
       // CloudFront with OAI should work reliably with private S3 buckets
       return cdnUrl;
-    } else {
-      // Test if Bunny CDN is working (this will fail if not properly configured)
-      const isWorking = await testCdnUrl(cdnUrl);
-      if (isWorking) {
-        return cdnUrl;
-      }
-      
-      // Fallback to S3 signed URLs if CDN is not properly configured
-      console.warn(`Bunny CDN not accessible, falling back to S3 signed URL: ${cdnUrl}`);
     }
   }
   

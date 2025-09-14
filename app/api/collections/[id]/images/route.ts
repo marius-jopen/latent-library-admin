@@ -81,7 +81,23 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   const items = await Promise.all((rows ?? []).map(async (row: Record<string, unknown>) => {
     const bucket = (row.s3_bucket as string) || S3_DEFAULT_BUCKET;
     const imageUrl = await getImageUrl(bucket, row.s3_key as string, SIGNED_URL_TTL_SECONDS, true);
-    return { ...row, signedUrl: imageUrl };
+    
+    // Generate optimized URL for grid view (smaller images)
+    const { getOptimizedCdnUrl, getCdnType } = await import('@/lib/cdn');
+    const cdnType = getCdnType();
+    let optimizedUrl = imageUrl;
+    
+    if (cdnType === 'bunny') {
+      // Use Bunny CDN optimization for grid view
+      optimizedUrl = getOptimizedCdnUrl(row.s3_key as string, {
+        width: 400, // Optimized for grid display
+        height: 400,
+        quality: 80,
+        format: 'webp'
+      });
+    }
+    
+    return { ...row, signedUrl: optimizedUrl };
   }));
 
   let nextCursor: string | null = null;
