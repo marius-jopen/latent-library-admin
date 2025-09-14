@@ -106,6 +106,37 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
           </CardContent>
         </Card>
 
+        {item.caption && (
+          <Card>
+            <CardContent className="px-3 py-3">
+              <div className="text-sm">
+                <div className="font-semibold text-xs text-muted-foreground mb-2">Caption</div>
+                <div className="text-sm leading-relaxed">{item.caption}</div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {item.tags && item.tags.length > 0 && (
+          <Card>
+            <CardContent className="px-3 py-3">
+              <div className="text-sm">
+                <div className="font-semibold text-xs text-muted-foreground mb-2">Tags</div>
+                <div className="flex flex-wrap gap-1">
+                  {item.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-block px-2 py-1 text-xs bg-muted rounded-md text-muted-foreground"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           {/* <CardHeader className="px-3 py-1">
             <div className="font-semibold text-xs">Details</div>
@@ -120,6 +151,8 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
                 { label: 'Format', value: item.format || '—' },
                 { label: 'Status', value: item.status || '—' },
                 { label: 'NSFW', value: item.nsfw ? 'true' : 'false' },
+                { label: 'Tagged', value: item.tagged ? 'true' : 'false' },
+                { label: 'Last Tagged', value: item.last_tagged_at || '—' },
                 { label: 'Created', value: item.created_at },
                 { label: 'Bucket', value: item.s3_bucket || '—' },
                 { label: 'Key', value: item.s3_key, breakAll: true },

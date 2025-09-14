@@ -35,6 +35,8 @@ export async function DELETE(req: Request, context: { params: Promise<{ id: stri
 export async function GET(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const url = new URL(req.url);
+  const q = url.searchParams.get('q') ?? undefined;
+  const tags = url.searchParams.get('tags') ?? undefined; // comma-separated tag slugs
   const limit = Math.min(Number(url.searchParams.get('limit') || '60'), 200);
   const sortParam = (url.searchParams.get('sort') as `${string}.${'asc' | 'desc'}` | null) || 'created_at.desc';
   const cursor = url.searchParams.get('cursor') ?? undefined;
@@ -51,6 +53,19 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     .select('*, collection_images!inner(collection_id)', { count: 'exact' })
     .eq('collection_images.collection_id', collectionId)
     .order(sortField, { ascending: direction === 'asc', nullsFirst: direction === 'asc' });
+
+  // Apply search filters
+  if (q) {
+    // search by s3_key ilike, exact uid match, caption text search, or tags array search
+    query = query.or(`s3_key.ilike.%${q}%,uid.eq.${q},caption.ilike.%${q}%,tags.cs.{${q}}`);
+  }
+  if (tags) {
+    // Filter by tags - images must contain ALL specified tags
+    const tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+    if (tagArray.length > 0) {
+      query = query.contains('tags', tagArray);
+    }
+  }
 
   if (cursor) {
     const isAsc = direction === 'asc';

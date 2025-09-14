@@ -27,6 +27,10 @@ export type ImageRow = {
   metadata: unknown;
   signedUrl: string | null;
   liked?: boolean | null;
+  caption?: string | null;
+  tags?: string[] | null;
+  tagged?: boolean | null;
+  last_tagged_at?: string | null;
 };
 
 export function ImageCard({ item, onSelect }: { item: ImageRow; onSelect?: (item: ImageRow) => void }) {

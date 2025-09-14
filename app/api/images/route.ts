@@ -14,6 +14,7 @@ export async function GET(req: Request) {
   const status = url.searchParams.get('status') ?? undefined;
   const format = url.searchParams.get('format') ?? undefined;
   const nsfw = url.searchParams.get('nsfw') ?? undefined; // 'true' | 'false'
+  const tags = url.searchParams.get('tags') ?? undefined; // comma-separated tag slugs
   const limit = Math.min(Number(url.searchParams.get('limit') || DEFAULT_PAGE_SIZE), 200);
   const sortParam = (url.searchParams.get('sort') as SortParam | null) || 'created_at.desc';
   const cursor = url.searchParams.get('cursor') ?? undefined; // created_at or id depending on sort
@@ -23,8 +24,8 @@ export async function GET(req: Request) {
 
   // Filters
   if (q) {
-    // search by s3_key ilike or exact uid match
-    query = query.or(`s3_key.ilike.%${q}%,uid.eq.${q}`);
+    // search by s3_key ilike, exact uid match, caption text search, or tags array search
+    query = query.or(`s3_key.ilike.%${q}%,uid.eq.${q},caption.ilike.%${q}%,tags.cs.{${q}}`);
   }
   if (status) {
     query = query.eq('status', status);
@@ -36,6 +37,13 @@ export async function GET(req: Request) {
     query = query.eq('nsfw', true);
   } else if (nsfw === 'false') {
     query = query.eq('nsfw', false);
+  }
+  if (tags) {
+    // Filter by tags - images must contain ALL specified tags
+    const tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+    if (tagArray.length > 0) {
+      query = query.contains('tags', tagArray);
+    }
   }
 
   // Sorting
@@ -72,6 +80,10 @@ export async function GET(req: Request) {
     nsfw: boolean | null;
     metadata: unknown;
     liked?: boolean | null;
+    caption?: string | null;
+    tags?: string[] | null;
+    tagged?: boolean | null;
+    last_tagged_at?: string | null;
   };
 
   const items = await Promise.all(
