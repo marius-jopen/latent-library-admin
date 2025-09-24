@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   const cursor = url.searchParams.get('cursor') ?? undefined; // created_at or id depending on sort
 
   const supabase = getSupabaseAdminClient();
-  let query = supabase.from('images').select('*', { count: 'exact' });
+  let query = supabase.from('images').select('*', { count: 'estimated' });
 
   // Filters
   if (q) {

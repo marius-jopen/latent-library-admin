@@ -36,7 +36,7 @@ export function AdminSidebar({
   }, [selected?.id]); // Only trigger when the selected item changes
 
   return (
-    <aside className={`hidden lg:block transition-opacity duration-200 ${show ? 'opacity-100' : 'opacity-0'}`}>
+    <aside className={`hidden lg:block ${show ? 'opacity-100' : 'opacity-0'}`}>
       <div ref={sidebarRef} className="h-[calc(100dvh-88px)] sticky top-[88px] overflow-auto">
         {selected ? (
           <div className="relative">

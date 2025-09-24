@@ -322,7 +322,7 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
 
 
 
-      <div className={`lg:grid gap-0 transition-[grid-template-columns] duration-300 ${showDetail ? 'lg:grid-cols-[1fr_min(50vw,760px)]' : 'lg:grid-cols-[1fr_0]'}`}>
+      <div className={`lg:grid gap-0 ${showDetail ? 'lg:grid-cols-[1fr_min(50vw,760px)]' : 'lg:grid-cols-[1fr_0]'}`}>
         <div>
           <Gallery
             query={query}

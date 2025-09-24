@@ -51,7 +51,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
   let query = supabase
     .from('images')
-    .select('*, collection_images!inner(collection_id)', { count: 'exact' })
+    .select('*, collection_images!inner(collection_id)', { count: 'estimated' })
     .eq('collection_images.collection_id', collectionId)
     .order(sortField, { ascending: direction === 'asc', nullsFirst: direction === 'asc' });
 
