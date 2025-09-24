@@ -33,7 +33,7 @@ export type ImageRow = {
   last_tagged_at?: string | null;
 };
 
-export function ImageCard({ item, onSelect }: { item: ImageRow; onSelect?: (item: ImageRow) => void }) {
+export function ImageCard({ item, onSelect, isSelected, onToggleSelect, showCheckbox, thumbSize, onShiftClick, index }: { item: ImageRow; onSelect?: (item: ImageRow) => void; isSelected?: boolean; onToggleSelect?: (item: ImageRow) => void; showCheckbox?: boolean; thumbSize?: 'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS'; onShiftClick?: (item: ImageRow, index: number) => void; index?: number }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
   // const dims = item.width && item.height ? `${item.width}×${item.height}` : '';
   const [liked, setLiked] = useState<boolean>(!!item.liked);
@@ -53,7 +53,11 @@ export function ImageCard({ item, onSelect }: { item: ImageRow; onSelect?: (item
   }
 
   return (
-    <div className="group overflow-hidden rounded-md bg-card/50 shadow-sm hover:shadow-md transition">
+    <div 
+      className={`group overflow-hidden rounded-md bg-card/50 shadow-sm hover:shadow-md transition`}
+      data-image-card
+      data-image-id={item.id}
+    >
       <div
         role="button"
         tabIndex={0}
@@ -64,21 +68,66 @@ export function ImageCard({ item, onSelect }: { item: ImageRow; onSelect?: (item
             onSelect(item);
           }
         }}
-        onClick={onSelect ? () => onSelect(item) : undefined}
+        onClick={(e) => {
+          if (!showCheckbox) {
+            e.stopPropagation();
+            if (onSelect) onSelect(item);
+          } else {
+            // In multi-select mode, handle shift-click for range selection
+            if (e.shiftKey && onShiftClick && index !== undefined) {
+              e.preventDefault();
+              e.stopPropagation();
+              onShiftClick(item, index);
+            } else if (onToggleSelect) {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleSelect(item);
+            }
+          }
+        }}
         className="block w-full text-left"
       >
         <div
-          className="cursor-pointer  relative w-full overflow-hidden rounded-md bg-muted"
-          style={{ aspectRatio: item.width && item.height ? `${item.width}/${item.height}` : undefined }}
+          className="cursor-pointer relative w-full overflow-hidden rounded-md bg-muted"
+          style={{ 
+            aspectRatio: '1/1'
+          }}
         >
           {item.signedUrl ? (
-            <LazyImage src={item.signedUrl} alt={filename} className="w-full h-full" fit="cover" />
+            <LazyImage 
+              src={item.signedUrl} 
+              alt={filename} 
+              className="w-full h-full" 
+              fit={thumbSize === 'XXS' ? 'cover' : 'cover'} 
+            />
           ) : (
             <div className="text-xs text-muted-foreground">missing</div>
           )}
-          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <SaveButton saved={liked} onToggle={toggleLike} imageId={item.id} />
-          </div>
+          {thumbSize !== 'XXS' && (
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <SaveButton saved={liked} onToggle={toggleLike} imageId={item.id} />
+            </div>
+          )}
+          {showCheckbox && (
+            <div className="absolute top-2 left-2" data-checkbox>
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={isSelected || false}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onToggleSelect?.(item);
+                  }}
+                  className="sr-only"
+                />
+                <div className={`w-5 h-5 rounded-full transition-all duration-200 ${
+                  isSelected 
+                    ? 'bg-green-400' 
+                    : 'bg-white border-transparent'
+                }`}></div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

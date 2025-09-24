@@ -41,7 +41,7 @@ export function LazyImage({ src, alt, className, fit = 'cover' }: LazyImageProps
           alt={alt}
           loading="lazy"
           decoding="async"
-          className={`w-full h-auto ${fit === 'contain' ? 'object-contain' : 'object-cover'}`}
+          className={`w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'}`}
         />
       ) : null}
     </div>

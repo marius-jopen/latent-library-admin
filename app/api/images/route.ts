@@ -15,6 +15,7 @@ export async function GET(req: Request) {
   const format = url.searchParams.get('format') ?? undefined;
   const nsfw = url.searchParams.get('nsfw') ?? undefined; // 'true' | 'false'
   const tags = url.searchParams.get('tags') ?? undefined; // comma-separated tag slugs
+  const tagged = url.searchParams.get('tagged') ?? undefined; // 'true' | 'false'
   const limit = Math.min(Number(url.searchParams.get('limit') || DEFAULT_PAGE_SIZE), 200);
   const sortParam = (url.searchParams.get('sort') as SortParam | null) || 'created_at.desc';
   const cursor = url.searchParams.get('cursor') ?? undefined; // created_at or id depending on sort
@@ -24,8 +25,20 @@ export async function GET(req: Request) {
 
   // Filters
   if (q) {
-    // search by s3_key ilike, exact uid match, caption text search, or tags array search
-    query = query.or(`s3_key.ilike.%${q}%,uid.eq.${q},caption.ilike.%${q}%,tags.cs.{${q}}`);
+    // Word-tokenized OR search across filename, caption, and tags
+    const tokens = q
+      .split(/[\s,]+/)
+      .flatMap((t) => t.split('-'))
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    if (tokens.length > 0) {
+      const ilikeParts = tokens.map((t) => `s3_key.ilike.%${t}%`).join(',');
+      const captionParts = tokens.map((t) => `caption.ilike.%${t}%`).join(',');
+      const tagsParts = tokens.map((t) => `tags.cs.{${t}}`).join(',');
+      // Combine with OR between different fields and tokens
+      query = query.or([ilikeParts, captionParts, tagsParts, `uid.eq.${q}`].filter(Boolean).join(','));
+    }
   }
   if (status) {
     query = query.eq('status', status);
@@ -44,6 +57,11 @@ export async function GET(req: Request) {
     if (tagArray.length > 0) {
       query = query.contains('tags', tagArray);
     }
+  }
+  if (tagged === 'true') {
+    query = query.eq('tagged', true);
+  } else if (tagged === 'false') {
+    query = query.or('tagged.is.false,tagged.is.null');
   }
 
   // Sorting

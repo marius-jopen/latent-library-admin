@@ -14,6 +14,7 @@ export function SearchFilterBar({
   onChangeSort,
   collectionId,
   onChangeCollectionId,
+  totalCount,
 }: {
   q: string;
   onChangeQ: (v: string) => void;
@@ -23,15 +24,18 @@ export function SearchFilterBar({
   onChangeSort: (v: SortValue) => void;
   collectionId: number | null;
   onChangeCollectionId: (v: number | null) => void;
+  totalCount?: number | null;
 }) {
   return (
     <div className="flex flex-col sm:flex-row gap-2 sm:items-center py-2">
-      <div className="flex-1">
-        <SearchInput value={q} onChange={onChangeQ} />
+      <div className="flex-1 min-w-0">
+        <SearchInput value={q} onChange={onChangeQ} totalCount={totalCount} />
       </div>
-      <CollectionSelector value={collectionId} onChange={onChangeCollectionId} />
-      <GridSizeSelector value={size} onChange={onChangeSize} />
-      <SortSelector value={sort} onChange={onChangeSort} />
+      <div className="flex gap-2 flex-shrink-0">
+        <CollectionSelector value={collectionId} onChange={onChangeCollectionId} />
+        <GridSizeSelector value={size} onChange={onChangeSize} />
+        <SortSelector value={sort} onChange={onChangeSort} />
+      </div>
     </div>
   );
 }

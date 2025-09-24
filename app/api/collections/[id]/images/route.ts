@@ -37,6 +37,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   const url = new URL(req.url);
   const q = url.searchParams.get('q') ?? undefined;
   const tags = url.searchParams.get('tags') ?? undefined; // comma-separated tag slugs
+  const tagged = url.searchParams.get('tagged') ?? undefined; // 'true' | 'false'
   const limit = Math.min(Number(url.searchParams.get('limit') || '60'), 200);
   const sortParam = (url.searchParams.get('sort') as `${string}.${'asc' | 'desc'}` | null) || 'created_at.desc';
   const cursor = url.searchParams.get('cursor') ?? undefined;
@@ -56,8 +57,19 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
   // Apply search filters
   if (q) {
-    // search by s3_key ilike, exact uid match, caption text search, or tags array search
-    query = query.or(`s3_key.ilike.%${q}%,uid.eq.${q},caption.ilike.%${q}%,tags.cs.{${q}}`);
+    // Word-tokenized OR search across filename, caption, and tags
+    const tokens = q
+      .split(/[\s,]+/)
+      .flatMap((t) => t.split('-'))
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    if (tokens.length > 0) {
+      const ilikeParts = tokens.map((t) => `s3_key.ilike.%${t}%`).join(',');
+      const captionParts = tokens.map((t) => `caption.ilike.%${t}%`).join(',');
+      const tagsParts = tokens.map((t) => `tags.cs.{${t}}`).join(',');
+      query = query.or([ilikeParts, captionParts, tagsParts, `uid.eq.${q}`].filter(Boolean).join(','));
+    }
   }
   if (tags) {
     // Filter by tags - images must contain ALL specified tags
@@ -65,6 +77,11 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     if (tagArray.length > 0) {
       query = query.contains('tags', tagArray);
     }
+  }
+  if (tagged === 'true') {
+    query = query.eq('tagged', true);
+  } else if (tagged === 'false') {
+    query = query.or('tagged.is.false,tagged.is.null');
   }
 
   if (cursor) {

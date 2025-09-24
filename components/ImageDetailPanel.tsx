@@ -55,7 +55,7 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
   }
   return (
     <div className="h-full flex flex-col">
-      <div className="pl-3 pb-3 space-y-3 overflow-auto overflow-x-hidden">
+      <div className="pl-3 pb-3 space-y-3 overflow-x-hidden">
         <div className="overflow-hidden rounded-md cursor-zoom-in" onClick={onOpenModal}>
           {item.signedUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
