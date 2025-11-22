@@ -5,6 +5,10 @@ import { getImageUrl } from '@/lib/s3';
 const SIGNED_URL_TTL_SECONDS = Number(process.env.SIGNED_URL_TTL_SECONDS || '900');
 const S3_DEFAULT_BUCKET = process.env.S3_DEFAULT_BUCKET || 'latent-library';
 
+function escapeArrayLiteralToken(token: string): string {
+  return token.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const body = (await req.json()) as { imageId?: number };
@@ -57,18 +61,27 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
   // Apply search filters
   if (q) {
-    // Word-tokenized OR search across filename, caption, and tags
-    const tokens = q
-      .split(/[\s,]+/)
-      .flatMap((t) => t.split('-'))
-      .map((t) => t.trim())
-      .filter(Boolean);
+    const isQuoted = q.length >= 2 && q.startsWith('"') && q.endsWith('"');
+    if (isQuoted) {
+      const exact = q.slice(1, -1).trim();
+      if (exact) {
+        // Exact match when query is wrapped in quotes
+        query = query.or([`uid.eq.${exact}`, `s3_key.eq.${exact}`, `caption.eq.${exact}`].join(','));
+      }
+    } else {
+      // Word-tokenized OR search across filename, caption, and tags
+      const tokens = q
+        .split(/[\s,]+/)
+        .flatMap((t) => t.split('-'))
+        .map((t) => t.trim())
+        .filter(Boolean);
 
-    if (tokens.length > 0) {
-      const ilikeParts = tokens.map((t) => `s3_key.ilike.%${t}%`).join(',');
-      const captionParts = tokens.map((t) => `caption.ilike.%${t}%`).join(',');
-      const tagsParts = tokens.map((t) => `tags.cs.{${t}}`).join(',');
-      query = query.or([ilikeParts, captionParts, tagsParts, `uid.eq.${q}`].filter(Boolean).join(','));
+      if (tokens.length > 0) {
+        const ilikeParts = tokens.map((t) => `s3_key.ilike.%${t}%`).join(',');
+        const captionParts = tokens.map((t) => `caption.ilike.%${t}%`).join(',');
+        const tagsParts = tokens.map((t) => `tags.cs.{"${escapeArrayLiteralToken(t)}"}`).join(',');
+        query = query.or([ilikeParts, captionParts, tagsParts, `uid.eq.${q}`].filter(Boolean).join(','));
+      }
     }
   }
   if (tags) {

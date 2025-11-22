@@ -8,6 +8,11 @@ const S3_DEFAULT_BUCKET = process.env.S3_DEFAULT_BUCKET || 'latent-library';
 
 type SortParam = `${string}.${'asc' | 'desc'}`;
 
+function escapeArrayLiteralToken(token: string): string {
+  // Escape for Postgres array literal inside braces with double quotes
+  return token.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const q = url.searchParams.get('q') ?? undefined;
@@ -25,19 +30,28 @@ export async function GET(req: Request) {
 
   // Filters
   if (q) {
-    // Word-tokenized OR search across filename, caption, and tags
-    const tokens = q
-      .split(/[\s,]+/)
-      .flatMap((t) => t.split('-'))
-      .map((t) => t.trim())
-      .filter(Boolean);
+    const isQuoted = q.length >= 2 && q.startsWith('"') && q.endsWith('"');
+    if (isQuoted) {
+      const exact = q.slice(1, -1).trim();
+      if (exact) {
+        // Exact match when query is wrapped in quotes
+        query = query.or([`uid.eq.${exact}`, `s3_key.eq.${exact}`, `caption.eq.${exact}`].join(','));
+      }
+    } else {
+      // Word-tokenized OR search across filename, caption, and tags
+      const tokens = q
+        .split(/[\s,]+/)
+        .flatMap((t) => t.split('-'))
+        .map((t) => t.trim())
+        .filter(Boolean);
 
-    if (tokens.length > 0) {
-      const ilikeParts = tokens.map((t) => `s3_key.ilike.%${t}%`).join(',');
-      const captionParts = tokens.map((t) => `caption.ilike.%${t}%`).join(',');
-      const tagsParts = tokens.map((t) => `tags.cs.{${t}}`).join(',');
-      // Combine with OR between different fields and tokens
-      query = query.or([ilikeParts, captionParts, tagsParts, `uid.eq.${q}`].filter(Boolean).join(','));
+      if (tokens.length > 0) {
+        const ilikeParts = tokens.map((t) => `s3_key.ilike.%${t}%`).join(',');
+        const captionParts = tokens.map((t) => `caption.ilike.%${t}%`).join(',');
+        const tagsParts = tokens.map((t) => `tags.cs.{"${escapeArrayLiteralToken(t)}"}`).join(',');
+        // Combine with OR between different fields and tokens, and allow exact UID lookup
+        query = query.or([ilikeParts, captionParts, tagsParts, `uid.eq.${q}`].filter(Boolean).join(','));
+      }
     }
   }
   if (status) {

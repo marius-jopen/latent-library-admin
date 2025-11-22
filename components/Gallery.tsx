@@ -45,7 +45,7 @@ export function Gallery({ query, onSelect, gridClassName, removedIds, selectedIm
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [initialized, setInitialized] = useState<boolean>(false);
-  const [, setTotal] = useState<number | null>(null);
+  const [total, setTotal] = useState<number | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   
   // Drag selection state
@@ -66,9 +66,7 @@ export function Gallery({ query, onSelect, gridClassName, removedIds, selectedIm
         setItems(data.items);
         setNextCursor(data.nextCursor);
         setTotal(data.total);
-        onTotalChange?.(data.total);
         setInitialized(true);
-        onItemsChange?.(data.items);
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -94,13 +92,11 @@ export function Gallery({ query, onSelect, gridClassName, removedIds, selectedIm
           .then((data) => {
             setItems((prev) => {
               const next = prev.concat(data.items);
-              onItemsChange?.(next);
               return next;
             });
             setNextCursor(data.nextCursor);
             if (data.total != null) {
               setTotal(data.total);
-              onTotalChange?.(data.total);
             }
           })
           .finally(() => setLoading(false));
@@ -115,10 +111,18 @@ export function Gallery({ query, onSelect, gridClassName, removedIds, selectedIm
     if (!removedIds || removedIds.length === 0) return;
     setItems((prev) => {
       const next = prev.filter((it) => !removedIds.includes(it.id));
-      onItemsChange?.(next);
       return next;
     });
   }, [removedIds]);
+
+  // Propagate items and total changes to parent after commit
+  useEffect(() => {
+    if (onItemsChange) onItemsChange(items);
+  }, [items, onItemsChange]);
+
+  useEffect(() => {
+    if (onTotalChange) onTotalChange(total ?? null);
+  }, [total, onTotalChange]);
 
   // const loadedCount = items.length;
 
