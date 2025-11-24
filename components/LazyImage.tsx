@@ -8,9 +8,11 @@ type LazyImageProps = {
   className?: string;
   fit?: 'cover' | 'contain';
   placeholderSrc?: string;
+  eager?: boolean;
+  containerStyle?: React.CSSProperties;
 };
 
-export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc }: LazyImageProps) {
+export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc, eager = false, containerStyle }: LazyImageProps) {
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [srcToShow, setSrcToShow] = useState<string | null>(null);
@@ -25,6 +27,11 @@ export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc }
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    if (eager) {
+      setIsVisible(true);
+      setSrcToShow(src);
+      return;
+    }
     const io = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -38,10 +45,10 @@ export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [src]);
+  }, [src, eager]);
 
   return (
-    <div ref={containerRef} className={`${className || ''} relative`}>
+    <div ref={containerRef} className={`${className || ''} relative`} style={containerStyle}>
       {placeholderSrc ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img

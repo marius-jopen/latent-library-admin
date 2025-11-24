@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from '@/components/ui/card';
+import { LazyImage } from './LazyImage';
 import SaveButton from '@/components/admin/SaveButton';
 import CollectionPicker from '@/components/admin/CollectionPicker';
 import { useEffect, useMemo, useState } from 'react';
@@ -74,6 +75,26 @@ export function ImageDetailPanel({ item, prevItem, nextItem, onOpenModal, onClos
     }
   }, [item.signedUrl]);
 
+  const panelPlaceholder = useMemo(() => {
+    if (!item.signedUrl) return item.placeholderUrl || null;
+    try {
+      // Prefer API-provided tiny placeholder if available
+      if (item.placeholderUrl) return item.placeholderUrl;
+      const u = new URL(item.signedUrl);
+      if (u.hostname.includes('b-cdn.net')) {
+        u.searchParams.set('w', '60');
+        u.searchParams.set('h', '60');
+        u.searchParams.set('q', '20');
+        u.searchParams.set('f', 'webp');
+        u.searchParams.set('blur', '8');
+        return u.toString();
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }, [item.signedUrl, item.placeholderUrl]);
+
   // Preload neighbor images for snappy navigation in sidebar
   useEffect(() => {
     const neighbors = [prevItem, nextItem].filter(Boolean) as ImageRow[];
@@ -102,8 +123,18 @@ export function ImageDetailPanel({ item, prevItem, nextItem, onOpenModal, onClos
       <div className="pl-3 pb-3 space-y-3 overflow-x-hidden">
         <div className="overflow-hidden rounded-md cursor-zoom-in" onClick={onOpenModal}>
           {item.signedUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={panelSrc || item.signedUrl} alt={filename} loading="eager" decoding="async" className="w-full h-auto object-contain rounded-md shadow-sm" />
+            <LazyImage
+              src={panelSrc || item.signedUrl}
+              alt={filename}
+              className="w-full rounded-md shadow-sm"
+              containerStyle={{
+                aspectRatio: item.width && item.height ? `${item.width}/${item.height}` : undefined,
+                minHeight: 200,
+              }}
+              fit="contain"
+              placeholderSrc={panelPlaceholder || undefined}
+              eager
+            />
           ) : (
             <div className="text-sm text-muted-foreground">Signed URL unavailable</div>
           )}
