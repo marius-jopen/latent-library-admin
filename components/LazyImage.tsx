@@ -17,6 +17,12 @@ export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc }
   const [isHighLoaded, setIsHighLoaded] = useState(false);
 
   useEffect(() => {
+    // Reset transition state whenever the source changes
+    setIsHighLoaded(false);
+    setSrcToShow(null);
+  }, [src, placeholderSrc]);
+
+  useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
@@ -42,7 +48,7 @@ export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc }
           src={placeholderSrc}
           alt=""
           aria-hidden="true"
-          className={`absolute inset-0 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ${isHighLoaded ? 'opacity-0' : 'opacity-100'} blur-sm`}
+          className={`absolute inset-0 z-0 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ${isHighLoaded ? 'opacity-100' : 'opacity-100'} blur-sm`}
         />
       ) : null}
       {isVisible && srcToShow ? (
@@ -53,7 +59,11 @@ export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc }
           loading="lazy"
           decoding="async"
           onLoad={() => setIsHighLoaded(true)}
-          className={`absolute inset-0 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ${isHighLoaded ? 'opacity-100' : 'opacity-0'}`}
+          onError={() => {
+            // Keep placeholder if the high-res image fails
+            setIsHighLoaded(false);
+          }}
+          className={`absolute inset-0 z-10 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ${isHighLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
       ) : null}
     </div>
