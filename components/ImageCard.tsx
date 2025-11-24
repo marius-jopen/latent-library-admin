@@ -26,6 +26,8 @@ export type ImageRow = {
   nsfw: boolean | null;
   metadata: unknown;
   signedUrl: string | null;
+  thumbUrl?: string | null;
+  placeholderUrl?: string | null;
   liked?: boolean | null;
   caption?: string | null;
   tags?: string[] | null;
@@ -33,7 +35,7 @@ export type ImageRow = {
   last_tagged_at?: string | null;
 };
 
-export function ImageCard({ item, onSelect, isSelected, onToggleSelect, showCheckbox, thumbSize, onShiftClick, index }: { item: ImageRow; onSelect?: (item: ImageRow) => void; isSelected?: boolean; onToggleSelect?: (item: ImageRow) => void; showCheckbox?: boolean; thumbSize?: 'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS'; onShiftClick?: (item: ImageRow, index: number) => void; index?: number }) {
+export function ImageCard({ item, onSelect, isSelected, onToggleSelect, showCheckbox, thumbSize, onShiftClick, index }: { item: ImageRow; onSelect?: (item: ImageRow) => void; isSelected?: boolean; onToggleSelect?: (item: ImageRow) => void; showCheckbox?: boolean; thumbSize?: 'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS' | 'XXXS'; onShiftClick?: (item: ImageRow, index: number) => void; index?: number }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
   // const dims = item.width && item.height ? `${item.width}×${item.height}` : '';
   const [liked, setLiked] = useState<boolean>(!!item.liked);
@@ -95,10 +97,11 @@ export function ImageCard({ item, onSelect, isSelected, onToggleSelect, showChec
         >
           {item.signedUrl ? (
             <LazyImage 
-              src={item.signedUrl} 
+              src={item.thumbUrl || item.signedUrl} 
               alt={filename} 
               className="w-full h-full" 
               fit={thumbSize === 'XXS' ? 'cover' : 'cover'} 
+              placeholderSrc={item.placeholderUrl || undefined}
             />
           ) : (
             <div className="text-xs text-muted-foreground">missing</div>

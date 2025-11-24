@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-export type ThumbSize = 'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS';
+export type ThumbSize = 'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS' | 'XXXS';
 
 export function GridSizeSelector({ value, onChange }: { value: ThumbSize; onChange: (v: ThumbSize) => void }) {
   const labelFor: Record<ThumbSize, string> = {
@@ -19,6 +19,7 @@ export function GridSizeSelector({ value, onChange }: { value: ThumbSize; onChan
     S: 'Small',
     XS: 'Very Small',
     XXS: 'Tiny',
+    XXXS: 'Very Tiny',
   };
   return (
     <DropdownMenu>
@@ -27,7 +28,7 @@ export function GridSizeSelector({ value, onChange }: { value: ThumbSize; onChan
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuLabel>Thumbnail size</DropdownMenuLabel>
-        {(['XL', 'L', 'M', 'S', 'XS', 'XXS'] as const).map((s) => (
+        {(['XL', 'L', 'M', 'S', 'XS', 'XXS', 'XXXS'] as const).map((s) => (
           <DropdownMenuItem key={s} onClick={() => onChange(s)}>
             {labelFor[s]}
           </DropdownMenuItem>

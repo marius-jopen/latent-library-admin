@@ -12,7 +12,11 @@ type QueryState = {
   tagged?: 'true' | 'false';
 };
 
-async function fetchPage(params: QueryState & { cursor?: string }) {
+async function fetchPage(
+  params: QueryState & { cursor?: string },
+  thumbWidth?: number,
+  opts?: { signal?: AbortSignal; retry?: number }
+) {
   const basePath = params.collectionId != null ? `/api/collections/${params.collectionId}/images` : '/api/images';
   const url = new URL(basePath, window.location.origin);
   // Only forward known string query params; path already encodes collectionId
@@ -23,7 +27,11 @@ async function fetchPage(params: QueryState & { cursor?: string }) {
       url.searchParams.set(key, value);
     }
   }
-  const res = await fetch(url.toString());
+  // Pass desired thumbnail target width so the API can request optimized images from the CDN
+  if (typeof thumbWidth === 'number' && Number.isFinite(thumbWidth) && thumbWidth > 0) {
+    url.searchParams.set('thumb_w', String(Math.round(thumbWidth)));
+  }
+  const res = await fetch(url.toString(), { signal: opts?.signal });
   if (!res.ok) {
     let message = `Failed to fetch images (${res.status} ${res.statusText})`;
     try {
@@ -35,12 +43,20 @@ async function fetchPage(params: QueryState & { cursor?: string }) {
         if (text) message = text;
       } catch {}
     }
+    // Retry once on transient DB timeouts
+    const isTimeout =
+      /statement timeout|canceling statement due to statement timeout/i.test(message) ||
+      res.status === 504;
+    if ((opts?.retry ?? 0) > 0 && isTimeout) {
+      await new Promise((r) => setTimeout(r, 500));
+      return fetchPage(params, thumbWidth, { signal: opts?.signal, retry: (opts?.retry ?? 1) - 1 });
+    }
     throw new Error(message);
   }
   return (await res.json()) as { items: ImageRow[]; nextCursor: string | null; total: number | null };
 }
 
-export function Gallery({ query, onSelect, gridClassName, removedIds, selectedImageIds, onToggleSelect, showCheckboxes, onDragSelection, thumbSize, onShiftClick, onItemsChange, onTotalChange }: { query: QueryState; onSelect?: (item: ImageRow, index: number, list: ImageRow[]) => void; gridClassName?: string; removedIds?: number[]; selectedImageIds?: Set<number>; onToggleSelect?: (item: ImageRow) => void; showCheckboxes?: boolean; onDragSelection?: (selectedIds: Set<number>) => void; thumbSize?: 'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS'; onShiftClick?: (item: ImageRow, index: number) => void; onItemsChange?: (items: ImageRow[]) => void; onTotalChange?: (total: number | null) => void }) {
+export function Gallery({ query, onSelect, gridClassName, removedIds, selectedImageIds, onToggleSelect, showCheckboxes, onDragSelection, thumbSize, onShiftClick, onItemsChange, onTotalChange }: { query: QueryState; onSelect?: (item: ImageRow, index: number, list: ImageRow[]) => void; gridClassName?: string; removedIds?: number[]; selectedImageIds?: Set<number>; onToggleSelect?: (item: ImageRow) => void; showCheckboxes?: boolean; onDragSelection?: (selectedIds: Set<number>) => void; thumbSize?: 'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS' | 'XXXS'; onShiftClick?: (item: ImageRow, index: number) => void; onItemsChange?: (items: ImageRow[]) => void; onTotalChange?: (total: number | null) => void }) {
   const [items, setItems] = useState<ImageRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -56,12 +72,33 @@ export function Gallery({ query, onSelect, gridClassName, removedIds, selectedIm
 
   const stableQuery = useMemo(() => JSON.stringify(query), [query]);
 
+  // Compute a reasonable thumbnail target width for the current grid size and device pixel ratio
+  function computeThumbWidth(size: 'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS' | 'XXXS' | undefined): number {
+    const baseBySize: Record<'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS' | 'XXXS', number> = {
+      XL: 680,
+      L: 520,
+      M: 380,
+      S: 280,
+      XS: 180,
+      XXS: 120,
+      // 1/3 smaller than Tiny (120 * 2/3 = 80)
+      XXXS: 80,
+    };
+    const base = baseBySize[(size ?? 'XXS') as keyof typeof baseBySize] ?? 120;
+    const dpr = typeof window !== 'undefined' ? Math.min(2, Math.max(1, window.devicePixelRatio || 1)) : 1;
+    return Math.round(base * dpr);
+  }
+
   useEffect(() => {
     let ignore = false;
+    const controller = new AbortController();
     async function loadFirst() {
       setLoading(true);
       try {
-        const data = await fetchPage(JSON.parse(stableQuery));
+        const data = await fetchPage(JSON.parse(stableQuery), computeThumbWidth(thumbSize), {
+          signal: controller.signal,
+          retry: 1,
+        });
         if (ignore) return;
         setItems(data.items);
         setNextCursor(data.nextCursor);
@@ -78,8 +115,9 @@ export function Gallery({ query, onSelect, gridClassName, removedIds, selectedIm
     loadFirst();
     return () => {
       ignore = true;
+      controller.abort();
     };
-  }, [stableQuery]);
+  }, [stableQuery, thumbSize]);
 
   useEffect(() => {
     if (!sentinelRef.current) return;
@@ -88,7 +126,12 @@ export function Gallery({ query, onSelect, gridClassName, removedIds, selectedIm
       const entry = entries[0];
       if (entry.isIntersecting && !loading && nextCursor) {
         setLoading(true);
-        fetchPage({ ...(JSON.parse(stableQuery) as QueryState), cursor: nextCursor })
+        const controller = new AbortController();
+        fetchPage(
+          { ...(JSON.parse(stableQuery) as QueryState), cursor: nextCursor },
+          computeThumbWidth(thumbSize),
+          { signal: controller.signal, retry: 1 }
+        )
           .then((data) => {
             setItems((prev) => {
               const next = prev.concat(data.items);
@@ -104,7 +147,7 @@ export function Gallery({ query, onSelect, gridClassName, removedIds, selectedIm
     }, { rootMargin: '400px 0px' });
     io.observe(el);
     return () => io.disconnect();
-  }, [nextCursor, loading, stableQuery]);
+  }, [nextCursor, loading, stableQuery, thumbSize]);
 
   // Remove any items that were removed externally (e.g., from a collection) immediately
   useEffect(() => {

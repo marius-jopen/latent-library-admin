@@ -24,6 +24,7 @@ export async function GET(req: Request) {
   const limit = Math.min(Number(url.searchParams.get('limit') || DEFAULT_PAGE_SIZE), 200);
   const sortParam = (url.searchParams.get('sort') as SortParam | null) || 'created_at.desc';
   const cursor = url.searchParams.get('cursor') ?? undefined; // created_at or id depending on sort
+  const thumbW = Math.max(0, Number(url.searchParams.get('thumb_w') || '0')); // requested thumbnail width (square)
 
   const supabase = getSupabaseAdminClient();
   let query = supabase.from('images').select('*', { count: 'estimated' });
@@ -126,22 +127,35 @@ export async function GET(req: Request) {
       // Generate optimized URL for grid view (smaller images)
       const { getOptimizedCdnUrl, getCdnType } = await import('@/lib/cdn');
       const cdnType = getCdnType();
-      let optimizedUrl = imageUrl;
+      let thumbUrl: string | null = null;
+      let placeholderUrl: string | null = null;
       
       if (cdnType === 'bunny') {
         // Use Bunny CDN optimization for grid view
-        optimizedUrl = getOptimizedCdnUrl(row.s3_key, {
-          width: 400, // Optimized for grid display
-          height: 400,
+        const size = thumbW > 0 ? thumbW : 400; // fallback to previous behavior
+        thumbUrl = getOptimizedCdnUrl(row.s3_key, {
+          width: size,
+          height: size,
           quality: 80,
           format: 'webp'
+        });
+        // Tiny blurred placeholder (very small, low quality)
+        const phSize = Math.max(12, Math.min(40, Math.round(size / 6)));
+        placeholderUrl = getOptimizedCdnUrl(row.s3_key, {
+          width: phSize,
+          height: phSize,
+          quality: 20,
+          format: 'webp',
+          blur: 8,
         });
       }
       
       return {
         ...row,
         liked: !!(row as Record<string, unknown>).liked,
-        signedUrl: optimizedUrl,
+        signedUrl: imageUrl,     // keep full/base CDN URL for detail views
+        thumbUrl,                // optimized thumbnail URL for grid
+        placeholderUrl,          // tiny blurred preview
       };
     }),
   );

@@ -7,12 +7,14 @@ type LazyImageProps = {
   alt: string;
   className?: string;
   fit?: 'cover' | 'contain';
+  placeholderSrc?: string;
 };
 
-export function LazyImage({ src, alt, className, fit = 'cover' }: LazyImageProps) {
+export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc }: LazyImageProps) {
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [srcToShow, setSrcToShow] = useState<string | null>(null);
+  const [isHighLoaded, setIsHighLoaded] = useState(false);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -33,7 +35,16 @@ export function LazyImage({ src, alt, className, fit = 'cover' }: LazyImageProps
   }, [src]);
 
   return (
-    <div ref={containerRef} className={className}>
+    <div ref={containerRef} className={`${className || ''} relative`}>
+      {placeholderSrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={placeholderSrc}
+          alt=""
+          aria-hidden="true"
+          className={`absolute inset-0 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ${isHighLoaded ? 'opacity-0' : 'opacity-100'} blur-sm`}
+        />
+      ) : null}
       {isVisible && srcToShow ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -41,7 +52,8 @@ export function LazyImage({ src, alt, className, fit = 'cover' }: LazyImageProps
           alt={alt}
           loading="lazy"
           decoding="async"
-          className={`w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'}`}
+          onLoad={() => setIsHighLoaded(true)}
+          className={`absolute inset-0 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ${isHighLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
       ) : null}
     </div>

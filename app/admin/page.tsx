@@ -24,7 +24,7 @@ const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Latent Library';
 export default function AdminPage({ searchParams }: { searchParams?: Promise<{ collectionId?: string }> }) {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<string>('created_at.desc');
-  const [thumbSize, setThumbSize] = useState<'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS'>('XXS');
+  const [thumbSize, setThumbSize] = useState<'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS' | 'XXXS'>('XXS');
   const [selected, setSelected] = useState<import('@/components/ImageCard').ImageRow | null>(null);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const sp = searchParams ? use(searchParams) : undefined;
@@ -182,9 +182,13 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
   );
 
   const gridClassName = useMemo(() => {
-    // Special-case tiny thumbnails so gaps stay tiny even with sidebar open
+    // Special-case tiny sizes so gaps stay tiny even with sidebar open
     if (thumbSize === 'XXS') {
-      return showDetail ? 'grid grid-cols-6 gap-0.5' : 'grid grid-cols-16 gap-0.5';
+      // Keep tile width roughly constant by halving columns when sidebar opens
+      return showDetail ? 'grid grid-cols-8 gap-0.5' : 'grid grid-cols-16 gap-0.5';
+    }
+    if (thumbSize === 'XXXS') {
+      return showDetail ? 'grid grid-cols-12 gap-0.5' : 'grid grid-cols-24 gap-0.5';
     }
     // Desired columns at full width
     const fullCols = {
@@ -194,6 +198,7 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
       S: 5,
       XS: 8,
       XXS: 16,
+      XXXS: 24,
     }[thumbSize];
     // When the detail sidebar opens (~50% width), keep the same item size by halving columns
     const cols = showDetail
@@ -203,7 +208,8 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
           thumbSize === 'M' ? 2 :
           thumbSize === 'S' ? 3 :
           thumbSize === 'XS' ? 4 :
-          /* XXS */ 6
+          thumbSize === 'XXS' ? 6 :
+          /* XXXS */ 12
         )
       : fullCols;
     // Return a static class from the allowed set to satisfy Tailwind JIT
@@ -224,6 +230,14 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
       14: 'grid grid-cols-14 gap-0.5',
       15: 'grid grid-cols-15 gap-0.5',
       16: 'grid grid-cols-16 gap-0.5',
+      17: 'grid grid-cols-17 gap-0.5',
+      18: 'grid grid-cols-18 gap-0.5',
+      19: 'grid grid-cols-19 gap-0.5',
+      20: 'grid grid-cols-20 gap-0.5',
+      21: 'grid grid-cols-21 gap-0.5',
+      22: 'grid grid-cols-22 gap-0.5',
+      23: 'grid grid-cols-23 gap-0.5',
+      24: 'grid grid-cols-24 gap-0.5',
     };
     return clsMap[cols] || 'grid grid-cols-4 gap-2';
   }, [thumbSize, showDetail]);

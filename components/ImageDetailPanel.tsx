@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import SaveButton from '@/components/admin/SaveButton';
 import CollectionPicker from '@/components/admin/CollectionPicker';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ImageRow } from './ImageCard';
 import { extractCaptionText } from '@/lib/captionUtils';
 
@@ -53,13 +53,34 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
       });
     } catch {}
   }
+  
+  // Build an optimized image URL for the sidebar detail view
+  const panelSrc = useMemo(() => {
+    if (!item.signedUrl) return null;
+    try {
+      const u = new URL(item.signedUrl);
+      // Only append Bunny params if we're on Bunny CDN
+      if (u.hostname.includes('b-cdn.net')) {
+        const dpr = Math.min(2, Math.max(1, typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1));
+        const cssWidth = Math.min(typeof window !== 'undefined' ? window.innerWidth * 0.5 : 800, 760);
+        const target = Math.round(Math.min(1600, Math.max(600, cssWidth * dpr)));
+        u.searchParams.set('w', String(target));
+        u.searchParams.set('q', '80');
+        u.searchParams.set('f', 'webp');
+      }
+      return u.toString();
+    } catch {
+      return item.signedUrl;
+    }
+  }, [item.signedUrl]);
+
   return (
     <div className="h-full flex flex-col">
       <div className="pl-3 pb-3 space-y-3 overflow-x-hidden">
         <div className="overflow-hidden rounded-md cursor-zoom-in" onClick={onOpenModal}>
           {item.signedUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.signedUrl} alt={filename} className="w-full h-auto object-contain rounded-md shadow-sm" />
+            <img src={panelSrc || item.signedUrl} alt={filename} loading="eager" decoding="async" className="w-full h-auto object-contain rounded-md shadow-sm" />
           ) : (
             <div className="text-sm text-muted-foreground">Signed URL unavailable</div>
           )}

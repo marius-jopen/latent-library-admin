@@ -45,6 +45,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   const limit = Math.min(Number(url.searchParams.get('limit') || '60'), 200);
   const sortParam = (url.searchParams.get('sort') as `${string}.${'asc' | 'desc'}` | null) || 'created_at.desc';
   const cursor = url.searchParams.get('cursor') ?? undefined;
+  const thumbW = Math.max(0, Number(url.searchParams.get('thumb_w') || '0')); // requested thumbnail width
   const collectionId = Number(id);
   if (!Number.isFinite(collectionId)) {
     return NextResponse.json({ error: 'Invalid collection id' }, { status: 400 });
@@ -115,19 +116,30 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     // Generate optimized URL for grid view (smaller images)
     const { getOptimizedCdnUrl, getCdnType } = await import('@/lib/cdn');
     const cdnType = getCdnType();
-    let optimizedUrl = imageUrl;
+    let thumbUrl: string | null = null;
+    let placeholderUrl: string | null = null;
     
     if (cdnType === 'bunny') {
       // Use Bunny CDN optimization for grid view
-      optimizedUrl = getOptimizedCdnUrl(row.s3_key as string, {
-        width: 400, // Optimized for grid display
-        height: 400,
+      const size = thumbW > 0 ? thumbW : 400;
+      thumbUrl = getOptimizedCdnUrl(row.s3_key as string, {
+        width: size,
+        height: size,
         quality: 80,
         format: 'webp'
       });
+      // Tiny blurred placeholder
+      const phSize = Math.max(12, Math.min(40, Math.round(size / 6)));
+      placeholderUrl = getOptimizedCdnUrl(row.s3_key as string, {
+        width: phSize,
+        height: phSize,
+        quality: 20,
+        format: 'webp',
+        blur: 8,
+      });
     }
     
-    return { ...row, signedUrl: optimizedUrl };
+    return { ...row, signedUrl: imageUrl, thumbUrl, placeholderUrl };
   }));
 
   let nextCursor: string | null = null;
