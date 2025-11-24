@@ -7,9 +7,12 @@ import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 function DropdownMenu({
+  modal,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  // Avoid scroll locking and pointer-events changes on <body> to prevent layout shift and delays
+  const finalModal = modal ?? false
+  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" modal={finalModal} {...props} />
 }
 
 function DropdownMenuPortal({

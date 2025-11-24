@@ -1,6 +1,6 @@
 "use client";
 
-export function SaveButton({ saved, onToggle, className, imageId }: { saved: boolean; onToggle: () => void; className?: string; imageId?: number }) {
+export function SaveButton({ saved, onToggle, className, imageId, onAfterToggle }: { saved: boolean; onToggle: () => void; className?: string; imageId?: number; onAfterToggle?: () => void }) {
   return (
     <button
       type="button"
@@ -17,6 +17,7 @@ export function SaveButton({ saved, onToggle, className, imageId }: { saved: boo
           }
         }
         onToggle();
+        try { onAfterToggle?.(); } catch {}
       }}
       aria-label={saved ? 'Saved' : 'Save'}
       className={

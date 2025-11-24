@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, use } from 'react';
+import { useEffect, useMemo, useRef, useState, use, useCallback } from 'react';
 import { Gallery } from '@/components/Gallery';
 import Lightbox from './Lightbox';
 import SearchFilterBar from '@/components/admin/SearchFilterBar';
@@ -113,11 +113,21 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
   useEffect(() => {
     if (!headerRef.current) return;
     const el = headerRef.current;
-    const update = () => setHeaderHeight(el.offsetHeight);
+    let raf = 0;
+    const update = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const h = el.offsetHeight;
+        setHeaderHeight((prev) => (Math.abs(prev - h) <= 2 ? prev : h));
+      });
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
   }, []);
 
   useEffect(() => {
@@ -340,7 +350,7 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
         <div>
           <Gallery
             query={query}
-            onSelect={(it, idx, list) => { setItems(list); setSelected(it); setSelectedIndex(idx); setShowDetail(true); }}
+            onSelect={useCallback((it, idx, list) => { setItems(list); setSelected(it); setSelectedIndex(idx); setShowDetail(true); }, [])}
             gridClassName={gridClassName}
             removedIds={removedIds}
             selectedImageIds={selectedImageIds}
@@ -349,8 +359,8 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
             onDragSelection={handleDragSelection}
             thumbSize={thumbSize}
             onShiftClick={handleShiftClick}
-            onItemsChange={(list) => setItems(list)}
-            onTotalChange={(t) => setTotalCount(t)}
+            onItemsChange={useCallback((list) => setItems(list), [])}
+            onTotalChange={useCallback((t) => setTotalCount(t), [])}
           />
         </div>
         <AdminSidebar

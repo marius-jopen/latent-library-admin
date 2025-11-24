@@ -113,6 +113,14 @@
 }
 
 @layer base {
+  html {
+    /* Prevent layout shift when scrollbars appear/disappear */
+    scrollbar-gutter: stable both-edges;
+    /* Always reserve vertical scrollbar space across platforms */
+    overflow-y: scroll;
+    /* Never allow horizontal scrolling to expand layout when portals open */
+    overflow-x: hidden;
+  }
   * {
     @apply border-border outline-ring/50;
   }
