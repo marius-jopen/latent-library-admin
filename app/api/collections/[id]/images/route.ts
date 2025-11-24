@@ -56,8 +56,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 
   let query = supabase
     .from('images')
-    // Narrow fields for grid response; include join key
-    .select('id,uid,s3_bucket,s3_key,bytes,created_at,width,height,format,nsfw,liked, collection_images!inner(collection_id)')
+    .select('*, collection_images!inner(collection_id)', { count: 'estimated' })
     .eq('collection_images.collection_id', collectionId)
     .order(sortField, { ascending: direction === 'asc', nullsFirst: direction === 'asc' });
 
@@ -149,14 +148,7 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
     nextCursor = String(last[sortField] ?? last.id);
   }
 
-  return NextResponse.json(
-    { items, nextCursor, total: count ?? null },
-    {
-      headers: {
-        'Cache-Control': 's-maxage=15, stale-while-revalidate=60',
-      },
-    },
-  );
+  return NextResponse.json({ items, nextCursor, total: count ?? null });
 }
 
 

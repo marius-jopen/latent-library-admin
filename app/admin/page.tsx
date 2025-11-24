@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, use, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, use } from 'react';
 import { Gallery } from '@/components/Gallery';
 import Lightbox from './Lightbox';
 import SearchFilterBar from '@/components/admin/SearchFilterBar';
@@ -113,21 +113,11 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
   useEffect(() => {
     if (!headerRef.current) return;
     const el = headerRef.current;
-    let raf = 0;
-    const update = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const h = el.offsetHeight;
-        setHeaderHeight((prev) => (Math.abs(prev - h) <= 2 ? prev : h));
-      });
-    };
+    const update = () => setHeaderHeight(el.offsetHeight);
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => {
-      ro.disconnect();
-      cancelAnimationFrame(raf);
-    };
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -192,13 +182,9 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
   );
 
   const gridClassName = useMemo(() => {
-    // Special-case tiny sizes so gaps stay tiny even with sidebar open
-    if (thumbSize === 'XXS') {
-      // Keep tile width roughly constant by halving columns when sidebar opens
-      return showDetail ? 'grid grid-cols-8 gap-0.5' : 'grid grid-cols-16 gap-0.5';
-    }
-    if (thumbSize === 'XXXS') {
-      return showDetail ? 'grid grid-cols-12 gap-0.5' : 'grid grid-cols-24 gap-0.5';
+    // Special-case tiny thumbnails so gaps stay tiny even with sidebar open
+    if (thumbSize === 'XXS' || thumbSize === 'XXXS') {
+      return showDetail ? 'grid grid-cols-6 gap-0.5' : 'grid grid-cols-16 gap-0.5';
     }
     // Desired columns at full width
     const fullCols = {
@@ -208,7 +194,7 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
       S: 5,
       XS: 8,
       XXS: 16,
-      XXXS: 24,
+      XXXS: 20,
     }[thumbSize];
     // When the detail sidebar opens (~50% width), keep the same item size by halving columns
     const cols = showDetail
@@ -219,7 +205,7 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
           thumbSize === 'S' ? 3 :
           thumbSize === 'XS' ? 4 :
           thumbSize === 'XXS' ? 6 :
-          /* XXXS */ 12
+          /* XXXS */ 8
         )
       : fullCols;
     // Return a static class from the allowed set to satisfy Tailwind JIT
@@ -350,7 +336,7 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
         <div>
           <Gallery
             query={query}
-            onSelect={useCallback((it, idx, list) => { setItems(list); setSelected(it); setSelectedIndex(idx); setShowDetail(true); }, [])}
+            onSelect={(it, idx, list) => { setItems(list); setSelected(it); setSelectedIndex(idx); setShowDetail(true); }}
             gridClassName={gridClassName}
             removedIds={removedIds}
             selectedImageIds={selectedImageIds}
@@ -359,8 +345,8 @@ export default function AdminPage({ searchParams }: { searchParams?: Promise<{ c
             onDragSelection={handleDragSelection}
             thumbSize={thumbSize}
             onShiftClick={handleShiftClick}
-            onItemsChange={useCallback((list) => setItems(list), [])}
-            onTotalChange={useCallback((t) => setTotalCount(t), [])}
+            onItemsChange={(list) => setItems(list)}
+            onTotalChange={(t) => setTotalCount(t)}
           />
         </div>
         <AdminSidebar

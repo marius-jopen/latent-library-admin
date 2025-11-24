@@ -1,7 +1,7 @@
 "use client";
 
 import { LazyImage } from './LazyImage';
-import ThumbnailActions from '@/components/admin/ThumbnailActions';
+import SaveButton from '@/components/admin/SaveButton';
 import { useEffect, useState } from 'react';
 
 // function formatBytes(num?: number | null): string {
@@ -42,83 +42,6 @@ export function ImageCard({ item, onSelect, isSelected, onToggleSelect, showChec
   useEffect(() => {
     setLiked(!!item.liked);
   }, [item.id, item.liked]);
-
-  // Prefetch sidebar-sized image on hover/focus for fast open
-  // Lightweight global prefetch cache and rate limiter to avoid overloading the page
-  const g = globalThis as unknown as {
-    __LL_PREFETCHED?: Set<string>;
-    __LL_PREFETCH_INFLIGHT?: number;
-    __LL_PREFETCH_LAST_AT?: number;
-  };
-  const prefetchedUrls = g.__LL_PREFETCHED || new Set<string>();
-  g.__LL_PREFETCHED = prefetchedUrls;
-  g.__LL_PREFETCH_INFLIGHT = g.__LL_PREFETCH_INFLIGHT || 0;
-  g.__LL_PREFETCH_LAST_AT = g.__LL_PREFETCH_LAST_AT || 0;
-
-  const PREFETCH_DELAY_MS = 120; // only prefetch if user hovers briefly
-  const PREFETCH_RATE_MS = 350; // at most one prefetch every 350ms
-  const PREFETCH_MAX_CONCURRENCY = 2;
-  let prefetchTimer: number | null = null;
-
-  function canPrefetchNow(): boolean {
-    // Skip on touch devices (hover unreliable)
-    if (typeof window !== 'undefined' && 'ontouchstart' in window) return false;
-    // Respect Save-Data and very slow networks
-    try {
-      const conn = (navigator as any).connection as { saveData?: boolean; effectiveType?: string; downlink?: number } | undefined;
-      if (conn?.saveData) return false;
-      if (conn?.effectiveType && /^(2g)$/i.test(conn.effectiveType)) return false;
-      if (typeof conn?.downlink === 'number' && conn.downlink < 0.8) return false;
-    } catch {}
-    const now = Date.now();
-    if ((g.__LL_PREFETCH_INFLIGHT || 0) >= PREFETCH_MAX_CONCURRENCY) return false;
-    if (now - (g.__LL_PREFETCH_LAST_AT || 0) < PREFETCH_RATE_MS) return false;
-    return true;
-  }
-
-  function doPrefetch() {
-    if (!item.signedUrl) return;
-    try {
-      const u = new URL(item.signedUrl);
-      if (u.hostname.includes('b-cdn.net')) {
-        // Match the exact sizing logic used in ImageDetailPanel to guarantee a cache hit
-        const dpr = Math.min(2, Math.max(1, typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1));
-        const cssWidth = Math.min(typeof window !== 'undefined' ? window.innerWidth * 0.5 : 800, 760);
-        const target = Math.round(Math.min(1600, Math.max(600, cssWidth * dpr)));
-        u.searchParams.set('w', String(target));
-        u.searchParams.set('q', '80');
-        u.searchParams.set('f', 'webp');
-      }
-      const url = u.toString();
-      if (prefetchedUrls.has(url)) return;
-      if (!canPrefetchNow()) return;
-      prefetchedUrls.add(url);
-      g.__LL_PREFETCH_INFLIGHT = (g.__LL_PREFETCH_INFLIGHT || 0) + 1;
-      g.__LL_PREFETCH_LAST_AT = Date.now();
-      const img = new Image();
-      img.decoding = 'async';
-      img.loading = 'eager';
-      img.src = url;
-      const done = () => { g.__LL_PREFETCH_INFLIGHT = Math.max(0, (g.__LL_PREFETCH_INFLIGHT || 1) - 1); };
-      img.onload = done;
-      img.onerror = done;
-    } catch {}
-  }
-
-  function schedulePrefetch() {
-    if (prefetchTimer) return;
-    prefetchTimer = window.setTimeout(() => {
-      prefetchTimer = null;
-      doPrefetch();
-    }, PREFETCH_DELAY_MS);
-  }
-
-  function cancelPrefetch() {
-    if (prefetchTimer) {
-      clearTimeout(prefetchTimer);
-      prefetchTimer = null;
-    }
-  }
 
   async function toggleLike() {
     setLiked((v) => !v);
@@ -171,10 +94,6 @@ export function ImageCard({ item, onSelect, isSelected, onToggleSelect, showChec
           style={{ 
             aspectRatio: '1/1'
           }}
-          onMouseEnter={schedulePrefetch}
-          onMouseLeave={cancelPrefetch}
-          onFocus={schedulePrefetch}
-          onBlur={cancelPrefetch}
         >
           {item.signedUrl ? (
             <LazyImage 
@@ -187,11 +106,11 @@ export function ImageCard({ item, onSelect, isSelected, onToggleSelect, showChec
           ) : (
             <div className="text-xs text-muted-foreground">missing</div>
           )}
-          <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="pointer-events-auto">
-              <ThumbnailActions imageId={item.id} saved={liked} onToggleSaved={toggleLike} />
+          {thumbSize !== 'XXS' && (
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <SaveButton saved={liked} onToggle={toggleLike} imageId={item.id} />
             </div>
-          </div>
+          )}
           {showCheckbox && (
             <div className="absolute top-2 left-2" data-checkbox>
               <div className="relative">

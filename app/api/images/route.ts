@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSupabaseAdminClient } from '@/lib/supabaseAdmin';
 import { getImageUrl } from '@/lib/s3';
 
-const DEFAULT_PAGE_SIZE = Number(process.env.PAGE_SIZE || '48');
+const DEFAULT_PAGE_SIZE = Number(process.env.PAGE_SIZE || '60');
 const SIGNED_URL_TTL_SECONDS = Number(process.env.SIGNED_URL_TTL_SECONDS || '900');
 const S3_DEFAULT_BUCKET = process.env.S3_DEFAULT_BUCKET || 'latent-library';
 
@@ -27,10 +27,7 @@ export async function GET(req: Request) {
   const thumbW = Math.max(0, Number(url.searchParams.get('thumb_w') || '0')); // requested thumbnail width (square)
 
   const supabase = getSupabaseAdminClient();
-  // Narrow selection for grid to reduce payload; keep fields needed for sorting and UI
-  let query = supabase
-    .from('images')
-    .select('id,uid,s3_bucket,s3_key,bytes,created_at,width,height,format,nsfw,liked,tagged,last_tagged_at');
+  let query = supabase.from('images').select('*', { count: 'estimated' });
 
   // Filters
   if (q) {
@@ -169,15 +166,7 @@ export async function GET(req: Request) {
     nextCursor = String((last as Record<string, unknown>)[sortField] ?? last.id);
   }
 
-  return NextResponse.json(
-    { items, nextCursor, total: count ?? null },
-    {
-      headers: {
-        // Short-lived cache at the edge; safe for list views
-        'Cache-Control': 's-maxage=15, stale-while-revalidate=60',
-      },
-    },
-  );
+  return NextResponse.json({ items, nextCursor, total: count ?? null });
 }
 
 export async function PATCH(req: Request) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import ImageCard, { type ImageRow } from './ImageCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import DragSelection from '@/components/admin/DragSelection';
@@ -12,12 +12,7 @@ type QueryState = {
   tagged?: 'true' | 'false';
 };
 
-async function fetchPage(
-  params: QueryState & { cursor?: string },
-  thumbWidth?: number,
-  pageSize?: number,
-  opts?: { signal?: AbortSignal; retry?: number }
-) {
+async function fetchPage(params: QueryState & { cursor?: string }, thumbWidth?: number) {
   const basePath = params.collectionId != null ? `/api/collections/${params.collectionId}/images` : '/api/images';
   const url = new URL(basePath, window.location.origin);
   // Only forward known string query params; path already encodes collectionId
@@ -32,10 +27,7 @@ async function fetchPage(
   if (typeof thumbWidth === 'number' && Number.isFinite(thumbWidth) && thumbWidth > 0) {
     url.searchParams.set('thumb_w', String(Math.round(thumbWidth)));
   }
-  if (typeof pageSize === 'number' && Number.isFinite(pageSize) && pageSize > 0) {
-    url.searchParams.set('limit', String(Math.round(pageSize)));
-  }
-  const res = await fetch(url.toString(), { signal: opts?.signal });
+  const res = await fetch(url.toString());
   if (!res.ok) {
     let message = `Failed to fetch images (${res.status} ${res.statusText})`;
     try {
@@ -47,22 +39,12 @@ async function fetchPage(
         if (text) message = text;
       } catch {}
     }
-    // Retry once on transient DB timeouts
-    const isTimeout =
-      /statement timeout|canceling statement due to statement timeout/i.test(message) ||
-      res.status === 504;
-    if ((opts?.retry ?? 0) > 0 && isTimeout) {
-      // Reduce page size and retry quickly to avoid DB timeouts
-      const smaller = Math.max(12, Math.floor((pageSize ?? 48) / 2));
-      await new Promise((r) => setTimeout(r, 500));
-      return fetchPage(params, thumbWidth, smaller, { signal: opts?.signal, retry: (opts?.retry ?? 1) - 1 });
-    }
     throw new Error(message);
   }
   return (await res.json()) as { items: ImageRow[]; nextCursor: string | null; total: number | null };
 }
 
-export function GalleryComponent({ query, onSelect, gridClassName, removedIds, selectedImageIds, onToggleSelect, showCheckboxes, onDragSelection, thumbSize, onShiftClick, onItemsChange, onTotalChange }: { query: QueryState; onSelect?: (item: ImageRow, index: number, list: ImageRow[]) => void; gridClassName?: string; removedIds?: number[]; selectedImageIds?: Set<number>; onToggleSelect?: (item: ImageRow) => void; showCheckboxes?: boolean; onDragSelection?: (selectedIds: Set<number>) => void; thumbSize?: 'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS' | 'XXXS'; onShiftClick?: (item: ImageRow, index: number) => void; onItemsChange?: (items: ImageRow[]) => void; onTotalChange?: (total: number | null) => void }) {
+export function Gallery({ query, onSelect, gridClassName, removedIds, selectedImageIds, onToggleSelect, showCheckboxes, onDragSelection, thumbSize, onShiftClick, onItemsChange, onTotalChange }: { query: QueryState; onSelect?: (item: ImageRow, index: number, list: ImageRow[]) => void; gridClassName?: string; removedIds?: number[]; selectedImageIds?: Set<number>; onToggleSelect?: (item: ImageRow) => void; showCheckboxes?: boolean; onDragSelection?: (selectedIds: Set<number>) => void; thumbSize?: 'XL' | 'L' | 'M' | 'S' | 'XS' | 'XXS' | 'XXXS'; onShiftClick?: (item: ImageRow, index: number) => void; onItemsChange?: (items: ImageRow[]) => void; onTotalChange?: (total: number | null) => void }) {
   const [items, setItems] = useState<ImageRow[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -87,8 +69,7 @@ export function GalleryComponent({ query, onSelect, gridClassName, removedIds, s
       S: 280,
       XS: 180,
       XXS: 120,
-      // 1/3 smaller than Tiny (120 * 2/3 = 80)
-      XXXS: 80,
+      XXXS: 60,
     };
     const base = baseBySize[(size ?? 'XXS') as keyof typeof baseBySize] ?? 120;
     const dpr = typeof window !== 'undefined' ? Math.min(2, Math.max(1, window.devicePixelRatio || 1)) : 1;
@@ -97,14 +78,10 @@ export function GalleryComponent({ query, onSelect, gridClassName, removedIds, s
 
   useEffect(() => {
     let ignore = false;
-    const controller = new AbortController();
     async function loadFirst() {
       setLoading(true);
       try {
-        const data = await fetchPage(JSON.parse(stableQuery), computeThumbWidth(thumbSize), 24, {
-          signal: controller.signal,
-          retry: 1,
-        });
+        const data = await fetchPage(JSON.parse(stableQuery), computeThumbWidth(thumbSize));
         if (ignore) return;
         setItems(data.items);
         setNextCursor(data.nextCursor);
@@ -121,7 +98,6 @@ export function GalleryComponent({ query, onSelect, gridClassName, removedIds, s
     loadFirst();
     return () => {
       ignore = true;
-      controller.abort();
     };
   }, [stableQuery, thumbSize]);
 
@@ -132,13 +108,7 @@ export function GalleryComponent({ query, onSelect, gridClassName, removedIds, s
       const entry = entries[0];
       if (entry.isIntersecting && !loading && nextCursor) {
         setLoading(true);
-        const controller = new AbortController();
-        fetchPage(
-          { ...(JSON.parse(stableQuery) as QueryState), cursor: nextCursor },
-          computeThumbWidth(thumbSize),
-          24,
-          { signal: controller.signal, retry: 1 }
-        )
+        fetchPage({ ...(JSON.parse(stableQuery) as QueryState), cursor: nextCursor }, computeThumbWidth(thumbSize))
           .then((data) => {
             setItems((prev) => {
               const next = prev.concat(data.items);
@@ -219,8 +189,6 @@ export function GalleryComponent({ query, onSelect, gridClassName, removedIds, s
     </div>
   );
 }
-
-export const Gallery = memo(GalleryComponent);
 
 export default Gallery;
 

@@ -8,30 +8,17 @@ type LazyImageProps = {
   className?: string;
   fit?: 'cover' | 'contain';
   placeholderSrc?: string;
-  eager?: boolean;
-  containerStyle?: React.CSSProperties;
 };
 
-export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc, eager = false, containerStyle }: LazyImageProps) {
+export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc }: LazyImageProps) {
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [srcToShow, setSrcToShow] = useState<string | null>(null);
   const [isHighLoaded, setIsHighLoaded] = useState(false);
 
   useEffect(() => {
-    // Reset transition state whenever the source changes
-    setIsHighLoaded(false);
-    setSrcToShow(null);
-  }, [src, placeholderSrc]);
-
-  useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    if (eager) {
-      setIsVisible(true);
-      setSrcToShow(src);
-      return;
-    }
     const io = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -45,17 +32,17 @@ export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc, 
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [src, eager]);
+  }, [src]);
 
   return (
-    <div ref={containerRef} className={`${className || ''} relative`} style={containerStyle}>
+    <div ref={containerRef} className={`${className || ''} relative`}>
       {placeholderSrc ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={placeholderSrc}
           alt=""
           aria-hidden="true"
-          className={`absolute inset-0 z-0 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ${isHighLoaded ? 'opacity-100' : 'opacity-100'} blur-sm`}
+          className={`absolute inset-0 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ${isHighLoaded ? 'opacity-0' : 'opacity-100'} blur-sm`}
         />
       ) : null}
       {isVisible && srcToShow ? (
@@ -66,11 +53,7 @@ export function LazyImage({ src, alt, className, fit = 'cover', placeholderSrc, 
           loading="lazy"
           decoding="async"
           onLoad={() => setIsHighLoaded(true)}
-          onError={() => {
-            // Keep placeholder if the high-res image fails
-            setIsHighLoaded(false);
-          }}
-          className={`absolute inset-0 z-10 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ${isHighLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 w-full h-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} transition-opacity duration-300 ${isHighLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
       ) : null}
     </div>

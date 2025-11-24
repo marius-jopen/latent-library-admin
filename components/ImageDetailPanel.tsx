@@ -1,10 +1,9 @@
 "use client";
 
 import { Card, CardContent } from '@/components/ui/card';
-import { LazyImage } from './LazyImage';
 import SaveButton from '@/components/admin/SaveButton';
 import CollectionPicker from '@/components/admin/CollectionPicker';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ImageRow } from './ImageCard';
 import { extractCaptionText } from '@/lib/captionUtils';
 
@@ -16,7 +15,7 @@ function formatBytes(num?: number | null): string {
   return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
-export function ImageDetailPanel({ item, prevItem, nextItem, onOpenModal, onClose, onNavigate, currentCollectionId, onRemovedFromCollection, onTagClick }: { item: ImageRow; prevItem?: ImageRow; nextItem?: ImageRow; onOpenModal?: () => void; onClose?: () => void; onNavigate?: (direction: 'prev' | 'next') => void; currentCollectionId?: number | null; onRemovedFromCollection?: (imageId: number) => void; onTagClick?: (tag: string) => void }) {
+export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, currentCollectionId, onRemovedFromCollection, onTagClick }: { item: ImageRow; onOpenModal?: () => void; onClose?: () => void; onNavigate?: (direction: 'prev' | 'next') => void; currentCollectionId?: number | null; onRemovedFromCollection?: (imageId: number) => void; onTagClick?: (tag: string) => void }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
   const [liked, setLiked] = useState<boolean>(!!item.liked);
   useEffect(() => {
@@ -54,87 +53,13 @@ export function ImageDetailPanel({ item, prevItem, nextItem, onOpenModal, onClos
       });
     } catch {}
   }
-  
-  // Build an optimized image URL for the sidebar detail view
-  const panelSrc = useMemo(() => {
-    if (!item.signedUrl) return null;
-    try {
-      const u = new URL(item.signedUrl);
-      // Only append Bunny params if we're on Bunny CDN
-      if (u.hostname.includes('b-cdn.net')) {
-        const dpr = Math.min(2, Math.max(1, typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1));
-        const cssWidth = Math.min(typeof window !== 'undefined' ? window.innerWidth * 0.5 : 800, 760);
-        const target = Math.round(Math.min(1600, Math.max(600, cssWidth * dpr)));
-        u.searchParams.set('w', String(target));
-        u.searchParams.set('q', '80');
-        u.searchParams.set('f', 'webp');
-      }
-      return u.toString();
-    } catch {
-      return item.signedUrl;
-    }
-  }, [item.signedUrl]);
-
-  const panelPlaceholder = useMemo(() => {
-    if (!item.signedUrl) return item.placeholderUrl || null;
-    try {
-      // Prefer API-provided tiny placeholder if available
-      if (item.placeholderUrl) return item.placeholderUrl;
-      const u = new URL(item.signedUrl);
-      if (u.hostname.includes('b-cdn.net')) {
-        u.searchParams.set('w', '60');
-        u.searchParams.set('h', '60');
-        u.searchParams.set('q', '20');
-        u.searchParams.set('f', 'webp');
-        u.searchParams.set('blur', '8');
-        return u.toString();
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  }, [item.signedUrl, item.placeholderUrl]);
-
-  // Preload neighbor images for snappy navigation in sidebar
-  useEffect(() => {
-    const neighbors = [prevItem, nextItem].filter(Boolean) as ImageRow[];
-    neighbors.forEach((n) => {
-      if (!n.signedUrl) return;
-      try {
-        const u = new URL(n.signedUrl);
-        if (u.hostname.includes('b-cdn.net')) {
-          const dpr = Math.min(2, Math.max(1, typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1));
-          const cssWidth = Math.min(typeof window !== 'undefined' ? window.innerWidth * 0.5 : 800, 760);
-          const target = Math.round(Math.min(1600, Math.max(600, cssWidth * dpr)));
-          u.searchParams.set('w', String(target));
-          u.searchParams.set('q', '80');
-          u.searchParams.set('f', 'webp');
-        }
-        const img = new Image();
-        img.decoding = 'async';
-        img.loading = 'eager';
-        img.src = u.toString();
-      } catch {}
-    });
-  }, [prevItem?.signedUrl, nextItem?.signedUrl]);
-
   return (
     <div className="h-full flex flex-col">
       <div className="pl-3 pb-3 space-y-3 overflow-x-hidden">
         <div className="overflow-hidden rounded-md cursor-zoom-in" onClick={onOpenModal}>
           {item.signedUrl ? (
-            <LazyImage
-              src={panelSrc || item.signedUrl}
-              alt={filename}
-              className="w-full rounded-md shadow-sm"
-              containerStyle={{
-                aspectRatio: item.width && item.height ? `${item.width}/${item.height}` : undefined,
-                minHeight: 200,
-              }}
-              fit="contain"
-              placeholderSrc={panelPlaceholder || undefined}
-              eager
-            />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.signedUrl} alt={filename} className="w-full h-auto object-contain rounded-md shadow-sm" />
           ) : (
             <div className="text-sm text-muted-foreground">Signed URL unavailable</div>
           )}

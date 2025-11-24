@@ -6,8 +6,8 @@ import ImageDetailPanel from '@/components/ImageDetailPanel';
 export function AdminSidebar({
   show,
   selected,
-  items,
-  selectedIndex,
+  // items,
+  // selectedIndex,
   onClose,
   onNavigate,
   onOpenModal,
@@ -35,20 +35,13 @@ export function AdminSidebar({
     }
   }, [selected?.id]); // Only trigger when the selected item changes
 
-  // Keep sidebar scroll isolated to avoid visual gaps below it
-
   return (
     <aside className={`hidden lg:block ${show ? 'opacity-100' : 'opacity-0'}`}>
-      <div
-        ref={sidebarRef}
-        className={`overflow-auto ${show ? 'fixed' : 'sticky'} right-0 top-[88px] h-[calc(100dvh-88px)] w-[min(50vw,760px)]`}
-      >
+      <div ref={sidebarRef} className="h-[calc(100dvh-88px)] sticky top-[88px] overflow-auto">
         {selected ? (
           <div className="relative">
             <ImageDetailPanel
               item={selected}
-              prevItem={selectedIndex != null && selectedIndex > 0 ? items[selectedIndex - 1] : undefined}
-              nextItem={selectedIndex != null && selectedIndex < items.length - 1 ? items[selectedIndex + 1] : undefined}
               onOpenModal={onOpenModal}
               onClose={onClose}
               onNavigate={onNavigate}
