@@ -43,6 +43,32 @@ export function ImageCard({ item, onSelect, isSelected, onToggleSelect, showChec
     setLiked(!!item.liked);
   }, [item.id, item.liked]);
 
+  // Prefetch sidebar-sized image on hover/focus for fast open
+  const prefetchedUrls = (globalThis as unknown as { __LL_PREFETCHED?: Set<string> }).__LL_PREFETCHED || new Set<string>();
+  (globalThis as unknown as { __LL_PREFETCHED?: Set<string> }).__LL_PREFETCHED = prefetchedUrls;
+  function prefetchPanel() {
+    if (!item.signedUrl) return;
+    try {
+      const u = new URL(item.signedUrl);
+      if (u.hostname.includes('b-cdn.net')) {
+        // Match the exact sizing logic used in ImageDetailPanel to guarantee a cache hit
+        const dpr = Math.min(2, Math.max(1, typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1));
+        const cssWidth = Math.min(typeof window !== 'undefined' ? window.innerWidth * 0.5 : 800, 760);
+        const target = Math.round(Math.min(1600, Math.max(600, cssWidth * dpr)));
+        u.searchParams.set('w', String(target));
+        u.searchParams.set('q', '80');
+        u.searchParams.set('f', 'webp');
+      }
+      const url = u.toString();
+      if (prefetchedUrls.has(url)) return;
+      prefetchedUrls.add(url);
+      const img = new Image();
+      img.decoding = 'async';
+      img.loading = 'eager';
+      img.src = url;
+    } catch {}
+  }
+
   async function toggleLike() {
     setLiked((v) => !v);
     try {
@@ -94,6 +120,8 @@ export function ImageCard({ item, onSelect, isSelected, onToggleSelect, showChec
           style={{ 
             aspectRatio: '1/1'
           }}
+          onMouseEnter={prefetchPanel}
+          onFocus={prefetchPanel}
         >
           {item.signedUrl ? (
             <LazyImage 

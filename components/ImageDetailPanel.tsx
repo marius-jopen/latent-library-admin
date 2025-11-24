@@ -15,7 +15,7 @@ function formatBytes(num?: number | null): string {
   return `${val.toFixed(val < 10 && i > 0 ? 1 : 0)} ${units[i]}`;
 }
 
-export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, currentCollectionId, onRemovedFromCollection, onTagClick }: { item: ImageRow; onOpenModal?: () => void; onClose?: () => void; onNavigate?: (direction: 'prev' | 'next') => void; currentCollectionId?: number | null; onRemovedFromCollection?: (imageId: number) => void; onTagClick?: (tag: string) => void }) {
+export function ImageDetailPanel({ item, prevItem, nextItem, onOpenModal, onClose, onNavigate, currentCollectionId, onRemovedFromCollection, onTagClick }: { item: ImageRow; prevItem?: ImageRow; nextItem?: ImageRow; onOpenModal?: () => void; onClose?: () => void; onNavigate?: (direction: 'prev' | 'next') => void; currentCollectionId?: number | null; onRemovedFromCollection?: (imageId: number) => void; onTagClick?: (tag: string) => void }) {
   const filename = item.s3_key?.split('/').pop() || item.s3_key;
   const [liked, setLiked] = useState<boolean>(!!item.liked);
   useEffect(() => {
@@ -73,6 +73,29 @@ export function ImageDetailPanel({ item, onOpenModal, onClose, onNavigate, curre
       return item.signedUrl;
     }
   }, [item.signedUrl]);
+
+  // Preload neighbor images for snappy navigation in sidebar
+  useEffect(() => {
+    const neighbors = [prevItem, nextItem].filter(Boolean) as ImageRow[];
+    neighbors.forEach((n) => {
+      if (!n.signedUrl) return;
+      try {
+        const u = new URL(n.signedUrl);
+        if (u.hostname.includes('b-cdn.net')) {
+          const dpr = Math.min(2, Math.max(1, typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1));
+          const cssWidth = Math.min(typeof window !== 'undefined' ? window.innerWidth * 0.5 : 800, 760);
+          const target = Math.round(Math.min(1600, Math.max(600, cssWidth * dpr)));
+          u.searchParams.set('w', String(target));
+          u.searchParams.set('q', '80');
+          u.searchParams.set('f', 'webp');
+        }
+        const img = new Image();
+        img.decoding = 'async';
+        img.loading = 'eager';
+        img.src = u.toString();
+      } catch {}
+    });
+  }, [prevItem?.signedUrl, nextItem?.signedUrl]);
 
   return (
     <div className="h-full flex flex-col">

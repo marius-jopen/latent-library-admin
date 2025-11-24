@@ -6,8 +6,8 @@ import ImageDetailPanel from '@/components/ImageDetailPanel';
 export function AdminSidebar({
   show,
   selected,
-  // items,
-  // selectedIndex,
+  items,
+  selectedIndex,
   onClose,
   onNavigate,
   onOpenModal,
@@ -42,6 +42,8 @@ export function AdminSidebar({
           <div className="relative">
             <ImageDetailPanel
               item={selected}
+              prevItem={selectedIndex != null && selectedIndex > 0 ? items[selectedIndex - 1] : undefined}
+              nextItem={selectedIndex != null && selectedIndex < items.length - 1 ? items[selectedIndex + 1] : undefined}
               onOpenModal={onOpenModal}
               onClose={onClose}
               onNavigate={onNavigate}
